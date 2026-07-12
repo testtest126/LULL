@@ -5,6 +5,12 @@
 **A psychological horror game for iPhone that stops behaving like software.**
 Built to be played once. Alone. In the dark.
 
+<p>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/platform-iOS%2017%2B-lightgrey.svg" alt="iOS 17+">
+  <img src="https://img.shields.io/badge/status-v0.1%20vertical%20slice-8a1f1f.svg" alt="v0.1 vertical slice">
+</p>
+
 The pitch in one line: not "a scary game on a phone" — **the scary thing is the
 phone.** It is in your hand, it has a camera on your face and a mic in your room,
 it knows it is late, and it can reach you after you have closed it.
