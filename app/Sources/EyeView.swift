@@ -49,6 +49,13 @@ struct EyeView: View {
         }
     }
 
+    /// The line comes from LULLKit's tested narration layer — Beckett while it is
+    /// calm, Poe as it wakes — advancing on the same clock that drives the dread.
+    private var line: String {
+        let beat = Atmosphere.beat(forElapsed: model.eye.elapsed)
+        return Atmosphere.narration(for: phase, beat: beat)?.text ?? ""
+    }
+
     private var previewOpacity: Double {
         switch phase {
         case .watching: return 0.22
@@ -61,14 +68,6 @@ struct EyeView: View {
         case .watching: return 0.55
         case .noticing: return 0.32
         default:        return 0.15
-        }
-    }
-    private var line: String {
-        switch phase {
-        case .watching: return "close your eyes.\nlet it watch for you."
-        case .noticing: return "you're still awake.\nso is it."
-        case .awake:    return "it knows your face now."
-        default:        return ""
         }
     }
 }

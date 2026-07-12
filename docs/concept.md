@@ -48,7 +48,26 @@ sprawling epic. Dread over gore: the phone doesn't need blood. In horror,
 restraint scares harder than spectacle, and restraint is exactly what a solo
 build can afford to do *impeccably*.
 
-## 06 — The one rule: horror by permission, not violation
+## 06 — The voice: Kafka, Beckett, Poe
+
+LULL speaks in three literary registers, one per act — a design language, not a
+citation. Every line is original prose written *in* each register; nothing is
+quoted, and no author's name ever appears on screen to break the spell.
+
+- **Kafka — the threshold.** The consent step: a record opening in your name, a
+  permission asked, a verdict withheld. You have done nothing; that was never the
+  question.
+- **Beckett — the lull.** The calm, and the closing: waiting, the failing light,
+  the nothing that is also a mercy. Saying no is always safe here.
+- **Poe — the watch.** The escalation: the eye that will not blink, the heart
+  beneath the floor that will not stop.
+
+The registers live in a pure, tested, sensor-free layer
+([`Atmosphere`](../LULLKit/Sources/LULLKit/Atmosphere.swift)) over the same phase
+machine that drives the dread — so the writing is provable, and cannot widen what
+the game is permitted to touch.
+
+## 07 — The one rule: horror by permission, not violation
 
 Every sensor is opt-in, explained, and revocable. Hard boundaries: nothing
 genuinely traumatizing, nothing deceptive, and **never** a glance at your photos,
@@ -57,14 +76,14 @@ turned uncanny — not from what it takes. Privacy-first is the decent thing, an
 also the only thing App Review will pass. (Enforced in code — see
 [`LULLKit/Sources/LULLKit/Consent.swift`](../LULLKit/Sources/LULLKit/Consent.swift).)
 
-## 07 — Lineage
+## 08 — Lineage
 
 Built on what the chess project taught: SwiftUI craft, a Vapor server we already
 know how to run, verify-don't-assume rigor, and a privacy-audited foundation.
 Chess learnings applied; chess baggage left behind — the right amount of process,
 not the whole fleet ceremony.
 
-## 08 — First playable
+## 09 — First playable
 
 The vertical slice: **THE EYE**, executed flawlessly, provable in about a week.
 The whole bet in a single question: does it make one person, alone at night, put

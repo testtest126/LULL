@@ -17,6 +17,15 @@ struct ConsentView: View {
                 .font(Theme.label).textCase(.uppercase).tracking(4)
                 .foregroundStyle(Theme.faint)
 
+            // The threshold, in Kafka's register: a faint epigraph, clearly
+            // atmosphere. The honest consent copy below is never touched by it.
+            if let epigraph = Atmosphere.narration(for: .seekingConsent)?.text {
+                Text(epigraph)
+                    .font(.system(.footnote, design: .serif)).italic()
+                    .foregroundStyle(Theme.faint)
+                    .padding(.top, 6)
+            }
+
             Text(Sensor.camera.rationale)
                 .font(Theme.body)
                 .foregroundStyle(Theme.dim)

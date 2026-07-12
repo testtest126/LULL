@@ -62,12 +62,31 @@ worth building.
 
 Full concept: [`docs/concept.md`](docs/concept.md).
 
+## The voice — Kafka, Beckett, Poe
+
+LULL narrates in three literary registers, one per act of the experience:
+
+| register | governs | the feeling |
+|---|---|---|
+| **Franz Kafka** | the threshold — consent | a record opening in your name; a verdict withheld |
+| **Samuel Beckett** | the lull — the calm & the endings | waiting, the failing light, the nothing that is a mercy |
+| **Edgar Allan Poe** | the watch — the escalation | the eye that will not blink; the heart beneath the floor |
+
+It is a design language enforced in a **pure, tested, sensor-free** layer
+([`Atmosphere`](LULLKit/Sources/LULLKit/Atmosphere.swift)) over the same phase
+machine that drives the dread — so the writing is provable and can never widen
+what the game is permitted to touch. Every line is **original prose in each
+register, never a quotation**, and no author's name appears on screen to break
+the spell.
+
 ## Status
 
-**v0.1 — the vertical slice.** `LULLKit` (consent + the `EyeSession` mechanic) is
-tested and green; the SwiftUI + AVFoundation app in [`app/`](app) implements
-`THE EYE`, consent-gated. Built in Xcode (see [`app/README.md`](app/README.md)).
-Not scary yet — but it watches, and it never breaks the rule.
+**v0.1 — the vertical slice.** `LULLKit` (consent, the `EyeSession` mechanic, and
+the `Atmosphere` voice) is tested and green — 16 tests, green from commit one; the
+SwiftUI + AVFoundation app in [`app/`](app) implements `THE EYE`, consent-gated,
+speaking in the three registers above. Built in Xcode (see
+[`app/README.md`](app/README.md)). Not scary yet — but it watches, it has a voice,
+and it never breaks the rule.
 
 ## License
 

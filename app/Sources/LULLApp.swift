@@ -26,9 +26,9 @@ struct RootView: View {
             case .watching, .noticing, .awake:
                 EyeView(model: model)
             case .denied:
-                EndingView(text: "You said no.\nGood. Sleep well.")
+                EndingView(text: Atmosphere.narration(for: .denied)?.text ?? "")
             case .released:
-                EndingView(text: "The eye is closed.\nIt was only ever a game.")
+                EndingView(text: Atmosphere.narration(for: .released)?.text ?? "")
             }
         }
         .animation(.easeInOut(duration: 0.7), value: model.eye.phase)
