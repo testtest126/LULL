@@ -1,0 +1,32 @@
+# Generated with XcodeGen — the .xcodeproj is derived, not committed.
+#   brew install xcodegen && cd app && xcodegen && open LULL.xcodeproj
+name: LULL
+options:
+  bundleIdPrefix: io.github.testtest126
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+packages:
+  LULLKit:
+    path: ../LULLKit
+targets:
+  LULL:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: LULLKit
+        product: LULLKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.testtest126.lull
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIStatusBarHidden: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        # The honest, App-Review-facing reason the camera is used.
+        INFOPLIST_KEY_NSCameraUsageDescription: "So LULL can see your face in the dark. Nothing is recorded and nothing leaves your phone; you can close the eye at any time."

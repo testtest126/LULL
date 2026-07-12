@@ -29,13 +29,15 @@ The allow-list is enforced **in code**: [`LULLKit`](LULLKit) has no way to even
 
 ## Architecture
 
-Reusing what the [MateMate chess project](../chess) taught — SwiftUI craft, a
+Reusing what the [MateMate chess project](https://github.com/testtest126/chess)
+taught — SwiftUI craft, a
 Vapor server we already know how to run, verify-don't-assume rigor, and a
 privacy-audited foundation.
 
 - **`LULLKit/`** — the shared Swift package: domain models + the consent
   foundation. Buildable and tested from commit one (the ChessKit pattern).
-- **`app/`** *(later)* — the SwiftUI iPhone app. Created in Xcode; depends on `LULLKit`.
+- **`app/`** — the SwiftUI iPhone app (the vertical slice, `THE EYE`). Built in
+  Xcode via `app/project.yml` (XcodeGen); depends on `LULLKit`.
 - **`server/`** *(later)* — the Vapor **haunt server**: content that shifts
   between sessions, seems to respond, and is quietly shared between players.
   MateMate's online/session stack, reused.
@@ -62,9 +64,11 @@ Full concept: [`docs/concept.md`](docs/concept.md).
 
 ## Status
 
-**v0.1 — concept + foundation.** Nothing scary yet: just the skeleton, and the
-rule it will never break.
+**v0.1 — the vertical slice.** `LULLKit` (consent + the `EyeSession` mechanic) is
+tested and green; the SwiftUI + AVFoundation app in [`app/`](app) implements
+`THE EYE`, consent-gated. Built in Xcode (see [`app/README.md`](app/README.md)).
+Not scary yet — but it watches, and it never breaks the rule.
 
 ## License
 
-All rights reserved (for now). Not open source.
+MIT — see [LICENSE](LICENSE). Build on it.
