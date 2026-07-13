@@ -85,6 +85,22 @@ what the game is permitted to touch. Every line is **original prose in each
 register, never a quotation**, and no author's name appears on screen to break
 the spell.
 
+## Building & Running
+
+Quickest path — one command, end to end (checks for XcodeGen, generates the
+Xcode project, boots an available iPhone Simulator, builds, installs, and
+launches `THE EYE`):
+
+```sh
+./run.sh
+```
+
+Needs a full Xcode install (not just the Command Line Tools) and
+[XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`) —
+the script checks both and tells you what's missing. The front camera is a
+no-op in the Simulator, so `THE EYE` opens but sees nothing there; build to a
+real device (see [`app/README.md`](app/README.md)) to see it actually watch.
+
 ## Status
 
 **v0.1 — the vertical slice.** `LULLKit` (consent, the `EyeSession` mechanic, and
