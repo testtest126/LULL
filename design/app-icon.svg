@@ -1,0 +1,22 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="44%" r="70%"><stop offset="0%" stop-color="#15171c"/><stop offset="55%" stop-color="#0a0b0e"/><stop offset="100%" stop-color="#040405"/></radialGradient>
+    <radialGradient id="lens" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#222831"/><stop offset="52%" stop-color="#0c0f13"/><stop offset="100%" stop-color="#000000"/></radialGradient>
+    <radialGradient id="catch" cx="40%" cy="34%" r="34%"><stop offset="0%" stop-color="#48545f" stop-opacity="0.85"/><stop offset="100%" stop-color="#48545f" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ember" cx="50%" cy="50%" r="50%"><stop offset="62%" stop-color="#c0322c" stop-opacity="0"/><stop offset="86%" stop-color="#c0322c" stop-opacity="0.85"/><stop offset="100%" stop-color="#c0322c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="vig" cx="50%" cy="50%" r="62%"><stop offset="60%" stop-color="#000000" stop-opacity="0"/><stop offset="100%" stop-color="#000000" stop-opacity="0.7"/></radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <g transform="translate(512 500)">
+    <circle r="300" fill="#c0322c" opacity="0.12" filter="url(#soft)"/>
+    <circle r="250" fill="url(#ember)"/>
+    <circle r="212" fill="url(#lens)" stroke="#232a32" stroke-width="3"/>
+    <circle r="212" fill="url(#catch)"/>
+    <circle r="132" fill="none" stroke="#171d24" stroke-width="2"/>
+    <circle r="66" fill="#000000"/>
+    <circle r="66" fill="none" stroke="#c0322c" stroke-width="2.5" opacity="0.5"/>
+    <circle r="20" cx="-30" cy="-34" fill="#5a6672" opacity="0.7"/>
+  </g>
+  <rect width="1024" height="1024" fill="url(#vig)"/>
+</svg>
