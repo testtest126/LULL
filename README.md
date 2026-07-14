@@ -137,7 +137,7 @@ real device (see [`app/README.md`](app/README.md)) to see it actually watch.
 **v0.1 — the vertical slice.** `LULLKit` (consent, the `EyeSession` mechanic, and
 the `Atmosphere` voice) is tested and green — 20 tests, green from commit one; the
 SwiftUI + AVFoundation app in [`app/`](app) implements `THE EYE`, consent-gated,
-speaking in the three registers above. Built in Xcode (see
+speaking in the four registers above. Built in Xcode (see
 [`app/README.md`](app/README.md)). Not scary yet — but it watches, it has a voice,
 and it never breaks the rule.
 
