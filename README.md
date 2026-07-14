@@ -85,6 +85,35 @@ what the game is permitted to touch. Every line is **original prose in each
 register, never a quotation**, and no author's name appears on screen to break
 the spell.
 
+## Screens
+
+`THE EYE`, played start to finish. Captured on the Simulator, where the front
+camera is a no-op — so these are the real vignette, copy, and phase states
+LULL renders, just without a live face to react to.
+
+<table>
+<tr>
+<td width="33%"><img src="docs/screens/01-consent-title.png" alt="Consent screen: LULL asks to see your face in the dark, with LET IT WATCH / NOT TONIGHT choices"></td>
+<td width="33%"><img src="docs/screens/02-watching.png" alt="THE EYE, phase WATCHING, early narration: the light is going, let it go"></td>
+<td width="33%"><img src="docs/screens/03-noticing.png" alt="THE EYE, phase WATCHING, narration: a small sound now, yours or the floor's"></td>
+</tr>
+<tr>
+<td>Consent, asked plainly — and refusable. This is the whole rule, on screen before anything else.</td>
+<td>The eye opens. Kafka's threshold has closed; Poe's watch begins.</td>
+<td>Escalation is pacing, not jump scares — the circle and the copy tighten together.</td>
+</tr>
+<tr>
+<td width="33%"><img src="docs/screens/04-awake.png" alt="THE EYE, phase WATCHING, narration: put the phone down, it will keep your face"></td>
+<td width="33%"><img src="docs/screens/05-ending-denied.png" alt="Ending screen after declining consent: you said no, nothing was written down, sleep well"></td>
+<td width="33%"><img src="docs/screens/06-ending-released.png" alt="Ending screen after closing the eye: the eye is closed, nothing watches now, it was only a game"></td>
+</tr>
+<tr>
+<td>Near the end of the watch — the register at its most direct.</td>
+<td>Say no at the door and nothing happens. No guilt trip, no re-ask — that's the rule holding.</td>
+<td>Close the eye mid-session and it lets go cleanly, in Beckett's register.</td>
+</tr>
+</table>
+
 ## Building & Running
 
 Quickest path — one command, end to end (checks for XcodeGen, generates the
