@@ -2,11 +2,12 @@ import Foundation
 
 /// LULL's voice.
 ///
-/// The game speaks in three literary registers, each governing one act of the
-/// experience. They are a design language, not a citation: the lines below are
-/// original prose written *in the register of* each author, never quotations —
-/// so nothing here reproduces a copyrighted text, and the dread is never broken
-/// by a name on screen. Who is credited, and why, lives in the README.
+/// The game speaks in four literary registers. Three each govern one act of
+/// the experience; the fourth runs alongside them as a throughline. They are
+/// a design language, not a citation: the lines below are original prose
+/// written *in the register of* each author, never quotations — so nothing
+/// here reproduces a copyrighted text, and the dread is never broken by a
+/// name on screen. Who is credited, and why, lives in the README.
 ///
 /// - `kafka`  — the **threshold**: a record opened in your name, consent asked,
 ///   the verdict withheld. Governs the consent step and its endings.
@@ -14,10 +15,17 @@ import Foundation
 ///   that is also a mercy. Governs the calm, and the closing.
 /// - `poe`    — the **watch**: the eye that will not blink, the heart beneath the
 ///   floor that will not stop. Governs the escalation to `awake`.
+/// - `bulgakov` — the **guest**: an urbane, amused observer who arrives
+///   hospitable and departs having revealed he was never a guest at all.
+///   Does not govern a single act; it is present in the threshold, the lull,
+///   and the watch, and curdles as they deepen — an aside spoken alongside
+///   whichever register owns the moment, the one voice that lingers across
+///   every act rather than yielding the floor.
 public enum Voice: String, Sendable, Codable, CaseIterable {
     case kafka
     case beckett
     case poe
+    case bulgakov
 }
 
 /// A single line of narration, tagged with the register it belongs to.
@@ -51,6 +59,10 @@ public enum Atmosphere {
             return [
                 Line("a file is opening in your name.", .kafka),
                 Line("you have done nothing.\nthat was never the question.", .kafka),
+                // BULGAKOV — the guest arrives. Hospitable, faintly amused,
+                // already too familiar for a first meeting.
+                Line("do come in. we've been expecting you\nfor rather longer than you'd guess.", .bulgakov),
+                Line("a small formality, this file.\nyou may decline — i rarely take it personally.", .bulgakov),
             ]
 
         // BECKETT — the lull. Nothing happens, and that is the whole of it.
@@ -60,6 +72,9 @@ public enum Atmosphere {
                 Line("nothing yet.\nthat is the idea.", .beckett),
                 Line("the light is going.\nlet it go.", .beckett),
                 Line("be still. stiller.\nthere is nowhere to be.", .beckett),
+                // BULGAKOV — still the charming guest, settling in.
+                Line("take your time. i have an abundance of it,\nand find i rather enjoy watching yours pass.", .bulgakov),
+                Line("such a well-kept quiet.\ni've admired worse rooms, and for longer.", .bulgakov),
             ]
 
         // POE — the watch stirs. Something turns to face you; a small sound
@@ -70,6 +85,9 @@ public enum Atmosphere {
                 Line("something behind the glass\nhas turned to face you.", .poe),
                 Line("a small sound now.\nyours, or the floor's.", .poe),
                 Line("the eye has found you\nand will not blink.", .poe),
+                // BULGAKOV — the pleasantries begin to thin.
+                Line("you're beginning to wonder\nwhether i was ever really a guest.", .bulgakov),
+                Line("something soft and black crossed the room just now.\ndon't trouble yourself over it.", .bulgakov),
             ]
 
         // POE — the climax. The vulture eye open all the way; the tell-tale
@@ -80,6 +98,11 @@ public enum Atmosphere {
                 Line("louder now — that beating.\nyou hear it too.", .poe),
                 Line("it was always this eye.\nit is open all the way.", .poe),
                 Line("put the phone down.\nit will keep your face.", .poe),
+                // BULGAKOV — the host curdles. The manuscript motif ties
+                // the "I AM STILL HERE" persistence idea to Bulgakov's
+                // signature theme: the thing that refuses to be destroyed.
+                Line("manuscripts, they say, don't burn.\nneither, it turns out, do i.", .bulgakov),
+                Line("i did introduce myself at the door.\nyou were the one who invited me further in.", .bulgakov),
             ]
 
         // KAFKA — the case that never opened. Merciful, and honest: nothing was

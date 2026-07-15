@@ -54,4 +54,65 @@ final class AtmosphereTests: XCTestCase {
         let denial = Atmosphere.narration(for: .denied)?.text.lowercased() ?? ""
         XCTAssertTrue(denial.contains("sleep well"), "declining must always feel safe")
     }
+
+    /// Bulgakov is registered as a fourth voice alongside the original three.
+    func testBulgakovIsARegisteredVoice() {
+        XCTAssertTrue(Voice.allCases.contains(.bulgakov))
+        XCTAssertEqual(Voice.allCases.count, 4)
+    }
+
+    /// Unlike Kafka/Beckett/Poe, Bulgakov doesn't govern a single act — it's a
+    /// throughline, present as an aside in the threshold, the lull, and the
+    /// watch, without displacing the register that owns each of those acts.
+    func testBulgakovRunsAlongsideEveryActWithoutOwningTheFirstLine() {
+        for phase: EyeSession.Phase in [.seekingConsent, .watching, .noticing, .awake] {
+            let lines = Atmosphere.script(for: phase)
+            XCTAssertTrue(lines.contains { $0.voice == .bulgakov },
+                          "\(phase) should carry a bulgakov aside")
+            XCTAssertNotEqual(lines.first?.voice, .bulgakov,
+                              "\(phase)'s own register must still speak first")
+        }
+        // Bulgakov never intrudes on the two short, merciful endings.
+        XCTAssertFalse(Atmosphere.script(for: .denied).contains { $0.voice == .bulgakov })
+        XCTAssertFalse(Atmosphere.script(for: .released).contains { $0.voice == .bulgakov })
+    }
+
+    /// The register curdles across the arc: hospitable near the threshold,
+    /// no longer pretending to be a guest by the time the eye is `awake` —
+    /// and the `awake` line ties Bulgakov's "manuscripts don't burn" motif to
+    /// the persistence theme, without quoting it.
+    func testBulgakovCurdlesFromHospitableToRevealed() {
+        let earlyText = Atmosphere.script(for: .seekingConsent)
+            .filter { $0.voice == .bulgakov }.map(\.text).joined().lowercased()
+        XCTAssertTrue(earlyText.contains("do come in") || earlyText.contains("expecting you"),
+                      "the guest should arrive charming, not menacing")
+
+        let lateText = Atmosphere.script(for: .awake)
+            .filter { $0.voice == .bulgakov }.map(\.text).joined().lowercased()
+        XCTAssertTrue(lateText.contains("burn"), "the persistence motif should surface by `awake`")
+        XCTAssertTrue(lateText.contains("guest") == false, "by now he no longer calls himself a guest")
+    }
+
+    /// Every Bulgakov line is original prose — never a quotation from
+    /// Bulgakov's actual texts. This is a smoke check, not a proof: it pins
+    /// a couple of the most famous lines/phrases from published translations
+    /// of "The Master and Margarita" so a future edit can't accidentally
+    /// paste one in verbatim.
+    func testBulgakovLinesAreNotVerbatimQuotations() {
+        let bannedPhrases = [
+            "who are you, then",
+            "part of that power",
+            "second-rate", // "Manuscripts don't burn" surrounding dialogue in well-known translations
+            "cowardice is the most terrible of vices",
+        ]
+        let allPhases: [EyeSession.Phase] = [.dormant, .seekingConsent, .denied, .watching, .noticing, .awake, .released]
+        let allBulgakovText = allPhases
+            .flatMap { Atmosphere.script(for: $0) }
+            .filter { $0.voice == .bulgakov }
+            .map(\.text).joined(separator: " ").lowercased()
+        for phrase in bannedPhrases {
+            XCTAssertFalse(allBulgakovText.contains(phrase),
+                           "bulgakov copy must stay original, not quote a known translation")
+        }
+    }
 }

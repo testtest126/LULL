@@ -68,15 +68,17 @@ worth building.
 
 Full concept: [`docs/concept.md`](docs/concept.md).
 
-## The voice — Kafka, Beckett, Poe
+## The voice — Kafka, Beckett, Poe, Bulgakov
 
-LULL narrates in three literary registers, one per act of the experience:
+LULL narrates in four literary registers. Three each own one act of the
+experience; the fourth runs alongside them as a throughline:
 
 | register | governs | the feeling |
 |---|---|---|
 | **Franz Kafka** | the threshold — consent | a record opening in your name; a verdict withheld |
 | **Samuel Beckett** | the lull — the calm & the endings | waiting, the failing light, the nothing that is a mercy |
 | **Edgar Allan Poe** | the watch — the escalation | the eye that will not blink; the heart beneath the floor |
+| **Mikhail Bulgakov** | the guest — an aside through threshold, lull & watch | an urbane, amused observer, hospitable at first, who curdles into revealing he was never a guest at all |
 
 It is a design language enforced in a **pure, tested, sensor-free** layer
 ([`Atmosphere`](LULLKit/Sources/LULLKit/Atmosphere.swift)) over the same phase
@@ -133,9 +135,9 @@ real device (see [`app/README.md`](app/README.md)) to see it actually watch.
 ## Status
 
 **v0.1 — the vertical slice.** `LULLKit` (consent, the `EyeSession` mechanic, and
-the `Atmosphere` voice) is tested and green — 16 tests, green from commit one; the
+the `Atmosphere` voice) is tested and green — 20 tests, green from commit one; the
 SwiftUI + AVFoundation app in [`app/`](app) implements `THE EYE`, consent-gated,
-speaking in the three registers above. Built in Xcode (see
+speaking in the four registers above. Built in Xcode (see
 [`app/README.md`](app/README.md)). Not scary yet — but it watches, it has a voice,
 and it never breaks the rule.
 
