@@ -1,0 +1,18 @@
+; UNVERIFIED — written by hand from the SwiftGodot README's ".gdextension"
+; example (see ASSESSMENT.md); never loaded by an actual Godot editor/runtime
+; in this spike (no Godot install on this machine).
+;
+; macos paths point at the dylib `swift build` produces. The ios paths are
+; illustrative only: real iOS export typically wants a static .a / .xcframework
+; slice rather than a runtime-dlopen'd .dylib (App Store code-signing rules),
+; which is exactly the kind of thing GodotApplePlugins / SwiftGodotAppleTemplate
+; exist to handle correctly — not verified here.
+[configuration]
+entry_symbol = "swift_entry_point"
+compatibility_minimum = 4.2
+
+[libraries]
+macos.debug = "res://bin/libDreadBeacon.dylib"
+macos.release = "res://bin/libDreadBeacon.dylib"
+ios.debug = "res://bin/libDreadBeacon.dylib"
+ios.release = "res://bin/libDreadBeacon.dylib"
