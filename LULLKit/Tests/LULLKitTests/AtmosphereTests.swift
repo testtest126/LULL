@@ -115,4 +115,78 @@ final class AtmosphereTests: XCTestCase {
                            "bulgakov copy must stay original, not quote a known translation")
         }
     }
+
+    /// A player who reaches `awake` and leaves quickly meets Bulgakov's
+    /// triumphant reveal — the default, and the only pairing that existed
+    /// before this fork. See docs/ideation/two-devils-wit-and-paralysis.md.
+    func testAwakeStaysTriumphantWhenDwellIsShort() {
+        for dwell in [0, Atmosphere.awakeParalysisThresholdBeats - 1] {
+            let lines = Atmosphere.script(for: .awake, dwellBeats: dwell)
+            let bulgakovText = lines.filter { $0.voice == .bulgakov }.map(\.text).joined().lowercased()
+            XCTAssertTrue(bulgakovText.contains("burn"), "dwell \(dwell): should still be the triumphant pairing")
+            XCTAssertFalse(bulgakovText.contains("no longer remember"), "dwell \(dwell): not the paralysis pairing yet")
+            XCTAssertEqual(lines.count, 6, "poe's four lines plus one bulgakov pairing")
+        }
+        // Calling without dwellBeats at all must match dwellBeats: 0 exactly —
+        // existing call sites (and testBulgakovCurdlesFromHospitableToRevealed)
+        // must keep seeing today's triumphant lines by default.
+        XCTAssertEqual(Atmosphere.script(for: .awake), Atmosphere.script(for: .awake, dwellBeats: 0))
+    }
+
+    /// A player who lingers at the ceiling meets the other devil: Bulgakov's
+    /// paralysis pairing, in the register of Dante's frozen, mute Lucifer —
+    /// Poe's own four lines are unchanged either way; only Bulgakov's aside forks.
+    func testAwakeSwitchesToParalysisWhenThePlayerLingers() {
+        for dwell in [Atmosphere.awakeParalysisThresholdBeats, Atmosphere.awakeParalysisThresholdBeats + 5] {
+            let lines = Atmosphere.script(for: .awake, dwellBeats: dwell)
+            let bulgakovText = lines.filter { $0.voice == .bulgakov }.map(\.text).joined().lowercased()
+            XCTAssertTrue(bulgakovText.contains("no longer remember"), "dwell \(dwell): should be the paralysis pairing")
+            XCTAssertFalse(bulgakovText.contains("burn"), "dwell \(dwell): not the triumphant pairing anymore")
+            XCTAssertEqual(lines.count, 6, "poe's four lines plus one bulgakov pairing, same shape either way")
+
+            let poeText = lines.filter { $0.voice == .poe }.map(\.text)
+            XCTAssertEqual(poeText, Atmosphere.script(for: .awake, dwellBeats: 0).filter { $0.voice == .poe }.map(\.text),
+                           "poe's lines don't change with dwell time — only bulgakov's pairing forks")
+        }
+    }
+
+    /// The beat-wrap (testBeatsWrapDeterministically) holds identically for
+    /// whichever `awake` pairing dwell time selects — lingering doesn't
+    /// break narration, it just changes which six lines are being cycled.
+    func testAwakeBeatWrapHoldsForBothPairings() {
+        for dwell in [0, Atmosphere.awakeParalysisThresholdBeats] {
+            let lines = Atmosphere.script(for: .awake, dwellBeats: dwell)
+            XCTAssertEqual(Atmosphere.narration(for: .awake, beat: 0, dwellBeats: dwell), lines.first)
+            XCTAssertEqual(Atmosphere.narration(for: .awake, beat: lines.count, dwellBeats: dwell), lines.first,
+                           "one full cycle returns to the first line, dwell \(dwell)")
+            XCTAssertEqual(Atmosphere.narration(for: .awake, beat: -1, dwellBeats: dwell), lines.last,
+                           "negative beats wrap too, dwell \(dwell)")
+        }
+    }
+
+    /// The paralysis lines are original prose, not a quotation or paraphrase
+    /// of any published English translation of the Inferno's closing canto.
+    /// The frozen/mute/three-mouths imagery is centuries-old public domain;
+    /// a translator's specific phrasing of it is not, so this pins a few of
+    /// the most recognizable phrases across well-known translations
+    /// (Longfellow, Ciardi/Mandelbaum-style renderings) as a smoke check —
+    /// notably, Dante's Lucifer never speaks a word in the poem itself, so
+    /// there is no dialogue in the source to have echoed in the first place.
+    func testParalysisLinesAreNotVerbatimQuotationsOfInferno() {
+        let bannedPhrases = [
+            "emperor of the kingdom dolorous",
+            "if he was fair as he is hideous now",
+            "with six eyes did he weep",
+            "three chins",
+            "bloody foam",
+            "the woe of all the universe",
+        ]
+        let paralysisText = Atmosphere.script(for: .awake, dwellBeats: Atmosphere.awakeParalysisThresholdBeats)
+            .filter { $0.voice == .bulgakov }
+            .map(\.text).joined(separator: " ").lowercased()
+        for phrase in bannedPhrases {
+            XCTAssertFalse(paralysisText.contains(phrase),
+                           "paralysis copy must stay original, not quote a known Inferno translation")
+        }
+    }
 }

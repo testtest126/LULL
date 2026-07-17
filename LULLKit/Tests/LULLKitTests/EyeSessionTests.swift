@@ -66,6 +66,26 @@ final class EyeSessionTests: XCTestCase {
         XCTAssertEqual(eye.phase, .watching, "a single huge dt cannot skip the whole arc")
     }
 
+    /// `elapsed` marks *when* the ceiling was reached and then holds — it is
+    /// not "how long has the player been here." `awakeElapsed` is the
+    /// separate, ongoing count that answers that question, so Atmosphere can
+    /// tell a player who glances at `awake` apart from one who lingers.
+    func testAwakeElapsedTracksTimeSpentAtTheCeilingSeparatelyFromElapsed() {
+        var eye = EyeSession(calmSeconds: 5, noticingSeconds: 5)
+        eye.begin(); eye.consent(true)
+        XCTAssertEqual(eye.awakeElapsed, 0, "hasn't reached the ceiling yet")
+
+        advance(&eye, seconds: 10)
+        XCTAssertEqual(eye.phase, .awake)
+        let elapsedAtCeiling = eye.elapsed
+        XCTAssertEqual(eye.awakeElapsed, 0, "just arrived; hasn't lingered yet")
+
+        advance(&eye, seconds: 7)
+        XCTAssertEqual(eye.elapsed, elapsedAtCeiling,
+                       "elapsed still marks when the ceiling was reached, not how long since")
+        XCTAssertEqual(eye.awakeElapsed, 7, "awakeElapsed keeps counting while the player stays")
+    }
+
     /// Drives the clock in small steps, the way the app's timer does.
     private func advance(_ eye: inout EyeSession, seconds: TimeInterval) {
         var remaining = seconds

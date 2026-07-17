@@ -51,7 +51,15 @@ struct EyeView: View {
 
     /// The line comes from LULLKit's tested narration layer — Beckett while it is
     /// calm, Poe as it wakes — advancing on the same clock that drives the dread.
+    /// `elapsed` stops advancing once `awake` is reached (it marks when the
+    /// ceiling arrived, not how long since), so `awake` beats — and which of
+    /// Bulgakov's two pairings plays — instead follow `awakeElapsed`, the
+    /// separate count of how long the player has stayed at the ceiling.
     private var line: String {
+        if phase == .awake {
+            let dwellBeats = Atmosphere.beat(forElapsed: model.eye.awakeElapsed)
+            return Atmosphere.narration(for: phase, beat: dwellBeats, dwellBeats: dwellBeats)?.text ?? ""
+        }
         let beat = Atmosphere.beat(forElapsed: model.eye.elapsed)
         return Atmosphere.narration(for: phase, beat: beat)?.text ?? ""
     }
