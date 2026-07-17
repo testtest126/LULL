@@ -85,6 +85,10 @@ public enum Atmosphere {
                 Line("something behind the glass\nhas turned to face you.", .poe),
                 Line("a small sound now.\nyours, or the floor's.", .poe),
                 Line("the eye has found you\nand will not blink.", .poe),
+                // POE — half-seen, at the very edge of the frame. Suggestion,
+                // not depiction: something crosses and is gone before it can
+                // be looked at directly. Never shown, only implied.
+                Line("something crossed the edge of frame.\nit didn't cross back.", .poe),
                 // BULGAKOV — the pleasantries begin to thin.
                 Line("you're beginning to wonder\nwhether i was ever really a guest.", .bulgakov),
                 Line("something soft and black crossed the room just now.\ndon't trouble yourself over it.", .bulgakov),
@@ -98,6 +102,11 @@ public enum Atmosphere {
                 Line("louder now — that beating.\nyou hear it too.", .poe),
                 Line("it was always this eye.\nit is open all the way.", .poe),
                 Line("put the phone down.\nit will keep your face.", .poe),
+                // POE — a glimpse, already over. The closest this register
+                // comes to showing another face: strictly retrospective, one
+                // frame long, and corrected by the time it's noticed — never
+                // lingered on, never described.
+                Line("for one frame, that wasn't your face.\nit already is again.", .poe),
                 // BULGAKOV — the host curdles. The manuscript motif ties
                 // the "I AM STILL HERE" persistence idea to Bulgakov's
                 // signature theme: the thing that refuses to be destroyed.

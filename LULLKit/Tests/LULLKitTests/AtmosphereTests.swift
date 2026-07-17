@@ -115,4 +115,25 @@ final class AtmosphereTests: XCTestCase {
                            "bulgakov copy must stay original, not quote a known translation")
         }
     }
+
+    /// A tiny half-seen touch: something crosses the edge of frame and is
+    /// gone, in Poe's register, alongside his existing noticing lines — never
+    /// shown, never described, only implied. Poe still speaks first at the
+    /// default beat, so this doesn't change what the player meets on arrival.
+    func testNoticingCarriesAnEdgeOfFrameLine() {
+        let poeText = Atmosphere.script(for: .noticing)
+            .filter { $0.voice == .poe }.map(\.text).joined(separator: " ").lowercased()
+        XCTAssertTrue(poeText.contains("edge of frame"), "noticing should carry the edge-of-frame beat")
+        XCTAssertEqual(Atmosphere.narration(for: .noticing)?.voice, .poe, "poe still speaks first by default")
+    }
+
+    /// A tiny, strictly retrospective glimpse at the ceiling — the closest
+    /// this register comes to a "glimpsed face," and it stays uncanny, not
+    /// gory: one frame, already corrected, nothing described or lingered on.
+    func testAwakeCarriesAGlimpsedFaceLine() {
+        let poeText = Atmosphere.script(for: .awake)
+            .filter { $0.voice == .poe }.map(\.text).joined(separator: " ").lowercased()
+        XCTAssertTrue(poeText.contains("wasn't your face"), "awake should carry the glimpsed-face beat")
+        XCTAssertFalse(poeText.contains("scream"), "the glimpse stays suggestive, never depicted")
+    }
 }
