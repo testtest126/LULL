@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LULL — a psychological horror game for iPhone</title>
+<meta name="description" content="LULL: a psychological horror game for iPhone that stops behaving like software. Consent-gated, dread over gore, built to be played once, alone, in the dark.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307080a'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23bb3b3b'/%3E%3C/svg%3E">
+<style>
+  :root {
+    /* LULLKit/app/Sources/Theme.swift — the app's real palette, unaltered */
+    --ink:   #07080a;
+    --bone:  #d7d5d0;
+    --dim:   #82858c;
+    --faint: #494c53;
+    --red:   #bb3b3b;
+
+    --ink-2: #0c0d10;
+    --hair:  rgba(215, 213, 208, .09);
+
+    --sans:  -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: ui-serif, "New York", Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --mono:  ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+    --measure: 38rem;
+    --edge: clamp(1.25rem, 6vw, 4rem);
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--ink); }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--red); color: var(--bone); }
+
+  a { color: var(--bone); text-decoration-color: var(--faint); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--red); }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .measure { max-width: var(--measure); margin: 0 auto; }
+
+  section {
+    padding: clamp(4rem, 12vh, 7rem) var(--edge);
+    position: relative;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* A faint, fixed grain field — the same texture idea as the app's own
+     GrainOverlay (app/Sources/EyeView.swift), reimplemented here as a static
+     SVG feTurbulence texture since this is a page, not a SwiftUI view. Static
+     on purpose: no animation to gate behind reduced-motion, one honest frame. */
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    z-index: -2;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .5;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(ellipse 60% 45% at 50% 45%, rgba(187,59,59,.10), transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero .eyebrow { margin-bottom: 1.75rem; }
+
+  .hero h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(3.2rem, 14vw, 6.5rem);
+    letter-spacing: .16em;
+    margin: 0 0 1.75rem;
+    padding-left: .16em; /* optically re-center the tracked glyphs */
+  }
+
+  .hook {
+    font-family: var(--serif);
+    font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+    line-height: 1.65;
+    color: var(--bone);
+    max-width: 34rem;
+    opacity: .92;
+  }
+  .hook strong { color: var(--bone); font-weight: 600; }
+
+  .badges { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; margin-top: 2.25rem; }
+  .badge {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border: 1px solid var(--hair);
+    border-radius: 2px;
+    padding: .35em .7em;
+  }
+
+  .hud {
+    margin-top: 3rem;
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    color: var(--faint);
+  }
+  .hud .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: .5em;
+  }
+
+  .scrolldown {
+    position: absolute;
+    bottom: clamp(1.5rem, 4vh, 3rem);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: .65rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .scrolldown .arrow { display: block; margin-top: .5rem; opacity: .6; }
+  @media (prefers-reduced-motion: no-preference) {
+    .scrolldown .arrow { animation: nudge 2.4s ease-in-out infinite; }
+  }
+  @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+  /* ---------- section chrome ---------- */
+  h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    letter-spacing: -.01em;
+    margin: 0 0 1.25rem;
+  }
+  h2 .rule-index {
+    display: block;
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: .9rem;
+  }
+
+  p { color: var(--dim); margin: 0 0 1.1rem; }
+  p:last-child { margin-bottom: 0; }
+  p strong { color: var(--bone); font-weight: 600; }
+  code {
+    font-family: var(--mono);
+    font-size: .88em;
+    color: var(--bone);
+    background: var(--ink-2);
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    padding: .1em .35em;
+  }
+
+  hr.hair {
+    border: none;
+    border-top: 1px solid var(--hair);
+    margin: 0;
+  }
+
+  /* ---------- consent section ---------- */
+  .consent {
+    background: var(--ink-2);
+    border-top: 1px solid var(--hair);
+    border-bottom: 1px solid var(--hair);
+  }
+  .consent-rules {
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem;
+  }
+  .consent-rules li {
+    padding-left: 1.4rem;
+    position: relative;
+    color: var(--dim);
+  }
+  .consent-rules li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: .55em;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+  .consent-rules strong { color: var(--bone); font-weight: 600; }
+
+  .sensor-list {
+    margin-top: 1.75rem;
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--faint);
+    letter-spacing: .02em;
+  }
+  .sensor-list span { color: var(--dim); }
+
+  .denial-proof {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .denial-proof img {
+    width: 140px;
+    border-radius: 6px;
+    border: 1px solid var(--hair);
+    display: block;
+  }
+  .denial-proof .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--bone);
+    font-size: 1.05rem;
+  }
+  .denial-proof .cap { color: var(--faint); font-size: .82rem; margin-top: .5rem; }
+  @media (max-width: 34rem) {
+    .denial-proof { grid-template-columns: 1fr; }
+    .denial-proof img { width: 110px; }
+  }
+
+  /* ---------- phase descent ---------- */
+  .descent-intro { margin-bottom: 3rem; }
+
+  .phase {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 2rem;
+    align-items: start;
+    padding: 2.25rem 0;
+  }
+  .phase + .phase { border-top: 1px solid var(--hair); }
+
+  .phase-name {
+    font-family: var(--mono);
+    font-size: .78rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding-top: .3rem;
+  }
+  .phase-name .n { color: var(--red); margin-right: .5em; }
+
+  .phase-body figure { margin: 0; }
+  .phase-line {
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 2.6vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--bone);
+    margin: 0 0 .75rem;
+    white-space: pre-line;
+  }
+  .phase-note { color: var(--dim); font-size: .92rem; margin: 0 0 1.1rem; }
+  .phase-shot {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-top: 1rem;
+  }
+  .phase-shot img {
+    width: 130px;
+    border-radius: 6px;
+    border: 1px solid var(--hair);
+    display: block;
+  }
+  .phase-shot figcaption {
+    font-size: .8rem;
+    color: var(--faint);
+    max-width: 22rem;
+  }
+  @media (max-width: 40rem) {
+    .phase { grid-template-columns: 1fr; gap: .6rem; }
+    .phase-shot { flex-direction: column; align-items: flex-start; }
+  }
+
+  .endings {
+    margin-top: 1.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px dashed var(--hair);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .endings .eyebrow { margin-bottom: 1rem; grid-column: 1 / -1; }
+  .ending {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .ending img { width: 96px; border-radius: 6px; border: 1px solid var(--hair); flex-shrink: 0; }
+  .ending .phase-line { font-size: 1.05rem; }
+  .ending .phase-note { font-size: .82rem; }
+  @media (max-width: 40rem) {
+    .endings { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- two devils ---------- */
+  .devils {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin-top: 2.25rem;
+  }
+  .devil {
+    border: 1px solid var(--hair);
+    border-radius: 8px;
+    padding: 1.75rem;
+  }
+  .devil h3 {
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin: 0 0 1rem;
+  }
+  .devil .status {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border: 1px solid var(--hair);
+    border-radius: 2px;
+    padding: .2em .5em;
+    margin-bottom: 1rem;
+  }
+  .devil .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--bone);
+    font-size: 1rem;
+    margin: 1rem 0;
+    white-space: pre-line;
+  }
+  @media (max-width: 40rem) {
+    .devils { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- mechanics ---------- */
+  .mech-table {
+    margin-top: 2rem;
+    border-top: 1px solid var(--hair);
+  }
+  .mech-row {
+    display: grid;
+    grid-template-columns: 11rem 1fr 6rem;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--hair);
+  }
+  .mech-name { font-family: var(--mono); font-size: .82rem; letter-spacing: .06em; color: var(--bone); }
+  .mech-desc { color: var(--dim); font-size: .92rem; }
+  .mech-status { font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; text-align: right; }
+  .mech-status.built { color: var(--red); }
+  .mech-status.named { color: var(--faint); }
+  @media (max-width: 40rem) {
+    .mech-row { grid-template-columns: 1fr; gap: .35rem; }
+    .mech-status { text-align: left; }
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    padding: 3.5rem var(--edge) 4rem;
+    border-top: 1px solid var(--hair);
+    text-align: center;
+  }
+  footer .closing {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--dim);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+  }
+  footer .links {
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .06em;
+    color: var(--faint);
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  footer .links a { color: var(--dim); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">a sleep aid</div>
+  <h1>LULL</h1>
+  <p class="hook">
+    Not &ldquo;a scary game on a phone&rdquo; — <strong>the scary thing is the phone.</strong>
+    It is in your hand, it has a camera on your face and a mic in your room,
+    it knows it is late, and it can reach you after you have closed it.
+  </p>
+  <div class="badges">
+    <span class="badge">v0.1 — vertical slice</span>
+    <span class="badge">iOS 17+</span>
+    <span class="badge">MIT licensed</span>
+  </div>
+  <div class="hud"><span class="dot"></span>REC · SUBJECT: YOU · LOCAL TIME: 03:33 · FRONT CAMERA: ACTIVE · 1 OTHER IS ALSO AWAKE</div>
+  <div class="scrolldown">scroll<span class="arrow">↓</span></div>
+</header>
+
+<section class="consent">
+  <div class="measure">
+    <div class="eyebrow">the one rule</div>
+    <h2>Horror by permission, not violation</h2>
+    <p>
+      Every sensor LULL touches is <strong>opt-in, explained, and revocable.</strong>
+      Default is deny. The player always has a panic switch that revokes
+      everything at once.
+    </p>
+    <ul class="consent-rules">
+      <li><strong>Forbidden, forever</strong> — photos, contacts, location trails, health data,
+        and anything read without you knowing. Not &ldquo;not yet.&rdquo; Designed out:
+        <code>LULLKit.Sensor</code> has no case for them, so no code can even ask.</li>
+      <li><strong>No genuine harm</strong> — uncanny, not traumatizing. Never deceptive
+        about what's real; the dread is fiction, and stays legibly fiction.</li>
+      <li><strong>The fear comes from what you knowingly hand over</strong>, turned uncanny —
+        not from what's taken.</li>
+    </ul>
+    <div class="sensor-list">
+      the entire allow-list, in code: <span>camera · microphone · notifications · haptics · motion</span> — nothing else is nameable.
+    </div>
+    <div class="denial-proof">
+      <img src="screens/05-ending-denied.png" alt="LULL's ending screen after declining consent: 'you said no. nothing was written down. sleep well.'">
+      <div>
+        <div class="quote">&ldquo;you said no.<br>nothing was written down. sleep well.&rdquo;</div>
+        <div class="cap">Saying no is a real, complete ending — not a worse one. No guilt trip, no re-ask.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="descent">
+  <div class="measure">
+    <div class="descent-intro">
+      <div class="eyebrow">the arc</div>
+      <h2>One phase machine, five states</h2>
+      <p>
+        Everything LULL does is driven by one small, tested state machine —
+        <code>EyeSession.Phase</code> — and one pure narration layer laid over
+        it, <code>Atmosphere</code>, that speaks in four literary registers
+        (Kafka, Beckett, Poe, and Bulgakov) but touches no sensor and can
+        never widen what the game is permitted to do. What follows are the
+        real, shipped lines a player actually meets, phase by phase.
+      </p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">01</span>dormant</div>
+      <div class="phase-body">
+        <p class="phase-note">Before anything begins. Nothing has started, so nothing speaks —
+          the one phase <code>Atmosphere</code> stays silent for.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">02</span>seekingConsent</div>
+      <div class="phase-body">
+        <p class="phase-line">a file is opening in your name.</p>
+        <p class="phase-note">Kafka's register — the threshold. Asked in-app, before any OS
+          prompt. Two real choices, both safe: <em>let it watch</em>, or <em>not tonight</em>.</p>
+        <figure class="phase-shot">
+          <img src="screens/01-consent-title.png" alt="LULL's consent screen: 'so LULL can see your face in the dark. you can turn this off at any time,' with LET IT WATCH / NOT TONIGHT choices">
+          <figcaption>Consent, asked plainly and refusable — this is the whole rule, on screen before anything else.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">03</span>watching</div>
+      <div class="phase-body">
+        <p class="phase-line">close your eyes.<br>let it watch for you.</p>
+        <p class="phase-note">Beckett's register — the lull. Calm, on purpose: the eye has to
+          be trustworthy first, or nothing else has anywhere to escalate from.</p>
+        <figure class="phase-shot">
+          <img src="screens/02-watching.png" alt="THE EYE, phase watching, early narration: 'the light is going, let it go'">
+          <figcaption>The eye opens. Kafka's threshold has closed; the calm begins.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">04</span>noticing</div>
+      <div class="phase-body">
+        <p class="phase-line">you're still awake.<br>so is it.</p>
+        <p class="phase-note">Poe's register begins. Something turns to face you; a small sound
+          starts, yours or the floor's. Escalation is pacing, never a jump scare.</p>
+        <figure class="phase-shot">
+          <img src="screens/03-noticing.png" alt="THE EYE, phase noticing, narration: 'a small sound now, yours or the floor's'">
+          <figcaption>The circle and the copy tighten together — the watch stirs.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">05</span>awake</div>
+      <div class="phase-body">
+        <p class="phase-line">it knows your face now.</p>
+        <p class="phase-note">The ceiling. It has stopped behaving like software. This is as far
+          as the vertical slice goes — and the &ldquo;close the eye&rdquo; control is visible
+          the entire time, from the first frame the camera opens.</p>
+        <figure class="phase-shot">
+          <img src="screens/04-awake.png" alt="THE EYE, phase awake, narration: 'put the phone down, it will keep your face'">
+          <figcaption>Near the end of the watch — the register at its most direct.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="endings">
+      <div class="eyebrow">or, at any point</div>
+      <div class="ending">
+        <img src="screens/05-ending-denied.png" alt="Ending screen after declining consent">
+        <div>
+          <p class="phase-line">you said no.<br>nothing was written down. sleep well.</p>
+          <p class="phase-note">denied — terminal, and merciful. Kafka closes the case that never opened.</p>
+        </div>
+      </div>
+      <div class="ending">
+        <img src="screens/06-ending-released.png" alt="Ending screen after closing the eye">
+        <div>
+          <p class="phase-line">the eye is closed.<br>nothing watches now. it was only a game.</p>
+          <p class="phase-note">released — the panic switch, honored from any phase, at any time. Beckett's register, letting go cleanly.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="two-devils">
+  <div class="measure">
+    <div class="eyebrow">the voice</div>
+    <h2>Two ways to be afraid</h2>
+    <p>
+      Bulgakov's register doesn't own a single act the way Kafka, Beckett, and
+      Poe do — he's a throughline, an aside spoken alongside whichever
+      register owns the moment, hospitable at first and curdling as the
+      session deepens.
+    </p>
+    <div class="devils">
+      <div class="devil">
+        <h3>Dread as wit</h3>
+        <span class="status">shipped</span>
+        <p>The fear of being toyed with by something that has more agency
+          than you, is enjoying itself, and is always one step ahead. It
+          escalates by <em>gaining</em> presence — more familiar, more
+          revealing — until it openly admits what it always was.</p>
+        <div class="quote">&ldquo;do come in. we've been expecting you<br>for rather longer than you'd guess.&rdquo;</div>
+        <div class="quote">&ldquo;manuscripts, they say, don't burn.<br>neither, it turns out, do i.&rdquo;</div>
+      </div>
+      <div class="devil">
+        <h3>Dread as paralysis</h3>
+        <span class="status">design notebook, not shipped</span>
+        <p>A second idea, still just a note in the design docs: the fear of
+          proximity to something that cannot stop, cannot notice you, and
+          cannot be reached. It escalates by <em>losing</em> range — fewer
+          words, the same words, less give.</p>
+        <div class="quote">&ldquo;i have already said everything<br>i am going to say.&rdquo;</div>
+        <p style="font-size:.82rem; color:var(--faint);">Proposed copy from <code>docs/ideation/two-devils-wit-and-paralysis.md</code> — not yet in the game.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mechanics">
+  <div class="measure">
+    <div class="eyebrow">the mechanic</div>
+    <h2>One mechanic, built. Five more, named.</h2>
+    <p>
+      The whole bet, in one question: <strong>does it make one person, alone
+      at night, put the phone face-down?</strong> If yes, everything else is
+      worth building. <code>THE EYE</code> is the only mechanic built so
+      far — the front camera, consent-gated, calm at first. The rest are
+      named in the concept doc, not yet built.
+    </p>
+    <div class="mech-table">
+      <div class="mech-row">
+        <div class="mech-name">THE EYE</div>
+        <div class="mech-desc">the front camera — it watches you, and reacts to your face</div>
+        <div class="mech-status built">built</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE ROOM</div>
+        <div class="mech-desc">the microphone — it hears the silence, and what breaks it</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE REACH</div>
+        <div class="mech-desc">a notification at 3am, while the app is closed</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE HOUR</div>
+        <div class="mech-desc">it plays differently when it is late and the room is still</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE PULSE</div>
+        <div class="mech-desc">a heartbeat in your palm, through haptics, not quite yours</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">BEHIND YOU</div>
+        <div class="mech-desc">spatial audio, something just over your shoulder</div>
+        <div class="mech-status named">named</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="closing">Not scary yet. But it watches, it has a voice, and it never breaks the rule.</div>
+  <div class="links">
+    <a href="https://github.com/testtest126/LULL">github.com/testtest126/LULL</a>
+    <a href="https://github.com/testtest126/LULL/blob/main/LICENSE">MIT license</a>
+    <a href="https://github.com/testtest126/LULL/blob/main/docs/concept.md">concept brief</a>
+  </div>
+</footer>
+
+</body>
+</html>
