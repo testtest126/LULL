@@ -95,13 +95,17 @@ public enum Atmosphere {
                 Line("something behind the glass\nhas turned to face you.", .poe),
                 Line("a small sound now.\nyours, or the floor's.", .poe),
                 Line("the eye has found you\nand will not blink.", .poe),
+                // POE — half-seen, at the very edge of the frame. Suggestion,
+                // not depiction: something crosses and is gone before it can
+                // be looked at directly. Never shown, only implied.
+                Line("something crossed the edge of frame.\nit didn't cross back.", .poe),
                 // BULGAKOV — the pleasantries begin to thin.
                 Line("you're beginning to wonder\nwhether i was ever really a guest.", .bulgakov),
                 Line("something soft and black crossed the room just now.\ndon't trouble yourself over it.", .bulgakov),
             ]
 
         // POE — the climax. The vulture eye open all the way; the tell-tale
-        // heart, louder, louder. Poe's four lines hold regardless of how
+        // heart, louder, louder. Poe's five lines hold regardless of how
         // long the player stays — only Bulgakov's pairing below forks.
         case .awake:
             let poe = [
@@ -109,6 +113,11 @@ public enum Atmosphere {
                 Line("louder now — that beating.\nyou hear it too.", .poe),
                 Line("it was always this eye.\nit is open all the way.", .poe),
                 Line("put the phone down.\nit will keep your face.", .poe),
+                // POE — a glimpse, already over. The closest this register
+                // comes to showing another face: strictly retrospective, one
+                // frame long, and corrected by the time it's noticed — never
+                // lingered on, never described.
+                Line("for one frame, that wasn't your face.\nit already is again.", .poe),
             ]
             if dwellBeats >= awakeParalysisThresholdBeats {
                 // BULGAKOV, PARALYSIS — a player who stays finds the guest

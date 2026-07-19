@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LULL — a psychological horror game for iPhone</title>
+<meta name="description" content="LULL: a psychological horror game for iPhone that stops behaving like software. Consent-gated, dread over gore, built to be played once, alone, in the dark.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60'%3E%3Crect x='-10' y='-10' width='120' height='80' fill='%23090c12'/%3E%3Cellipse cx='50' cy='30' rx='40' ry='16' fill='none' stroke='%237f9aa2' stroke-width='4'/%3E%3Ccircle cx='50' cy='30' r='9' fill='%23a8433f'/%3E%3C/svg%3E">
+<style>
+  :root {
+    /* Nudged from the app's real palette (app/Sources/Theme.swift: ink
+       #07080a, bone #d7d5d0, dim #82858c, faint #494c53, red #bb3b3b)
+       toward a cold, desaturated, analog register for this page's art
+       direction — not the literal in-app values. */
+    --ink:    #090c12;
+    --ink-2:  #0c111a;
+    --ink-3:  #101722;
+    --bone:   #d9d2c4;
+    --sepia:  #b9a179;
+    --cyan:   #7f9aa2;
+    --dim:    #838b93;
+    --faint:  #454b55;
+    --red:    #a8433f;
+
+    --hair:   rgba(217, 210, 196, .08);
+
+    --sans:  -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: ui-serif, "New York", Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --mono:  ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+    --measure: 38rem;
+    --edge: clamp(1.25rem, 6vw, 4rem);
+
+    /* The aperture's default/fallback openness — a calm, half-open state.
+       This is what renders if JS never runs at all (blocked, fails, etc.)
+       and is exactly what's used, unchanged, under prefers-reduced-motion —
+       see the script at the end of body. Everything else on the page is
+       real content and never depends on this value; it only ever drives
+       the decorative eye's clip-path. */
+    --scroll-lid: 25%;
+  }
+
+  * { box-sizing: border-box; }
+  /* html carries the base color; body deliberately does NOT repeat it.
+     body is a normal in-flow box with no stacking context of its own, so an
+     opaque body background paints in the same step as body's own content —
+     which is *after* any negative-z-index descendant of the root (like
+     .scroll-eye below). Two backgrounds at the same color looked identical
+     and hid the eye completely; one, on html only, lets --scroll-eye's
+     z-index: -1 actually show through. */
+  html { background: var(--ink); }
+  body {
+    margin: 0;
+    color: var(--bone);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--red); color: var(--bone); }
+
+  a { color: var(--bone); text-decoration-color: var(--faint); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--red); }
+
+  /* ---------- global texture: grain + scanlines + vignette ----------
+     One fixed, full-viewport, pointer-events:none layer sitting above
+     everything. Fixed (not tall/tiled to document height) so cost stays
+     constant regardless of page length. Static by default — the "must go
+     calm under reduced motion" rule is trivially satisfied because there is
+     nothing to turn off; the very slow drift below is the only motion, and
+     it is itself gated to no-preference only. */
+  .grain-field {
+    position: fixed;
+    inset: -4% ;
+    z-index: 999;
+    pointer-events: none;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(to bottom, rgba(0,0,0,.5) 0px, rgba(0,0,0,.5) 1px, transparent 1px, transparent 3px);
+    background-size: 240px 240px, 100% 3px;
+    mix-blend-mode: overlay;
+    opacity: .07;
+  }
+  .grain-field::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 75% 65% at 50% 45%, transparent 40%, rgba(0,0,0,.65) 100%);
+    mix-blend-mode: multiply;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .grain-field { animation: drift 9s ease-in-out infinite; }
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(-6px, 4px); }
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .measure { max-width: var(--measure); margin: 0 auto; }
+
+  section {
+    padding: clamp(4rem, 12vh, 7rem) var(--edge);
+    position: relative;
+  }
+
+  /* ---------- the eye / aperture motif ----------
+     One reusable glyph. Its clip-path reveals more of the same iris/pupil
+     as --lid grows; nothing about visibility of real *content* ever depends
+     on this — it is purely decorative, so a failure in the script below
+     never breaks the page, it just leaves the eye at its calm CSS default
+     (--scroll-lid: 25%, declared on :root). */
+  .eye {
+    display: inline-block;
+    width: 46px;
+    clip-path: inset(calc(50% - var(--lid)) 0);
+  }
+  .eye svg { display: block; width: 100%; height: auto; }
+  .eye-white { fill: none; stroke: var(--cyan); stroke-width: 2.5; opacity: .5; }
+  .eye-iris  { fill: none; stroke: var(--sepia); stroke-width: 2; opacity: .6; }
+  .eye-pupil { fill: var(--red); opacity: .55; }
+
+  /* A single continuous aperture, fixed to the viewport, present for the
+     whole page. Its openness — --lid, here reading the shared, scroll-
+     updated --scroll-lid custom property instead of a fixed value — is
+     what makes it "the eye that opens as you scroll" rather than five
+     separate icons. Sits behind normal page content (z-index: -1); every
+     section's own background/text still paints over it normally, so it
+     reads most clearly wherever a section has no opaque background of its
+     own — which is exactly the phase-descent section this is built for. */
+  .scroll-eye {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    width: min(46vw, 26rem);
+    opacity: .14;
+    pointer-events: none;
+  }
+  .scroll-eye .eye { --lid: var(--scroll-lid); width: 100%; }
+
+  /* ---------- ink-blot divider (original, generated — not copied) ----------
+     A hand-authored, roughly bilateral closed path, softened with a blur
+     filter so it reads as ink rather than crisp vector. Faint on purpose —
+     a divider, not a set piece. */
+  .blot-divider {
+    display: flex;
+    justify-content: center;
+    padding: 2.5rem 0;
+    opacity: .5;
+  }
+  .blot-divider svg { width: 96px; height: auto; filter: blur(1.5px); }
+  .blot-divider path { fill: var(--cyan); opacity: .1; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(ellipse 60% 45% at 50% 45%, rgba(168,67,63,.09), transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero .eyebrow { margin-bottom: 1.75rem; }
+
+  .hero h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(3.2rem, 14vw, 6.5rem);
+    letter-spacing: .16em;
+    margin: 0 0 1.75rem;
+    padding-left: .16em; /* optically re-center the tracked glyphs */
+  }
+
+  .hook {
+    font-family: var(--serif);
+    font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+    line-height: 1.65;
+    color: var(--bone);
+    max-width: 34rem;
+    opacity: .92;
+  }
+  .hook strong { color: var(--bone); font-weight: 600; }
+
+  .badges { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: center; margin-top: 2.25rem; }
+  .badge {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border: 1px solid var(--hair);
+    border-radius: 2px;
+    padding: .35em .7em;
+  }
+
+  .hud {
+    margin-top: 3rem;
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    color: var(--faint);
+  }
+  .hud .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: .5em;
+  }
+
+  .scrolldown {
+    position: absolute;
+    bottom: clamp(1.5rem, 4vh, 3rem);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: .65rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .scrolldown .arrow { display: block; margin-top: .5rem; opacity: .6; }
+  @media (prefers-reduced-motion: no-preference) {
+    .scrolldown .arrow { animation: nudge 2.4s ease-in-out infinite; }
+  }
+  @keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+  /* ---------- section chrome ---------- */
+  h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    letter-spacing: -.01em;
+    margin: 0 0 1.25rem;
+  }
+
+  p { color: var(--dim); margin: 0 0 1.1rem; }
+  p:last-child { margin-bottom: 0; }
+  p strong { color: var(--bone); font-weight: 600; }
+  code {
+    font-family: var(--mono);
+    font-size: .88em;
+    color: var(--bone);
+    background: var(--ink-2);
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    padding: .1em .35em;
+  }
+
+  /* ---------- consent section ---------- */
+  .consent {
+    background: var(--ink-2);
+    border-top: 1px solid var(--hair);
+    border-bottom: 1px solid var(--hair);
+  }
+  .consent-rules {
+    list-style: none;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem;
+  }
+  .consent-rules li {
+    padding-left: 1.4rem;
+    position: relative;
+    color: var(--dim);
+  }
+  .consent-rules li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: .55em;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+  .consent-rules strong { color: var(--bone); font-weight: 600; }
+
+  .sensor-list {
+    margin-top: 1.75rem;
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--faint);
+    letter-spacing: .02em;
+  }
+  .sensor-list span { color: var(--cyan); }
+
+  .denial-proof {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  .denial-proof img {
+    width: 140px;
+    border-radius: 6px;
+    border: 1px solid var(--hair);
+    display: block;
+    filter: sepia(.12) saturate(.9) contrast(1.02);
+  }
+  .denial-proof .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--bone);
+    font-size: 1.05rem;
+  }
+  .denial-proof .cap { color: var(--faint); font-size: .82rem; margin-top: .5rem; }
+  @media (max-width: 34rem) {
+    .denial-proof { grid-template-columns: 1fr; }
+    .denial-proof img { width: 110px; }
+  }
+
+  /* ---------- phase descent ---------- */
+  .descent-intro { margin-bottom: 3rem; }
+
+  .phase {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 2rem;
+    align-items: start;
+    padding: 2.25rem 0;
+  }
+  .phase + .phase { border-top: 1px solid var(--hair); }
+
+  .phase-name {
+    font-family: var(--mono);
+    font-size: .78rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding-top: .3rem;
+  }
+  .phase-name .n { color: var(--red); margin-right: .5em; }
+
+  .phase-body figure { margin: 0; }
+  .phase-line {
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 2.6vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--bone);
+    margin: 0 0 .75rem;
+    white-space: pre-line;
+  }
+  .phase-note { color: var(--dim); font-size: .92rem; margin: 0 0 1.1rem; }
+
+  .phase-shot { display: flex; gap: 1rem; align-items: flex-end; margin-top: 1rem; }
+  .frame { position: relative; display: inline-block; flex-shrink: 0; }
+  .frame img {
+    width: 148px;
+    border-radius: 5px;
+    border: 1px solid var(--hair);
+    display: block;
+    filter: sepia(.12) saturate(.9) contrast(1.02);
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,.6);
+  }
+  .frame-tag {
+    position: absolute;
+    top: 7px; left: 7px;
+    font-family: var(--mono);
+    font-size: .52rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    background: rgba(9, 12, 18, .65);
+    padding: .18em .4em;
+    border-radius: 2px;
+  }
+  .phase-shot figcaption { font-size: .8rem; color: var(--faint); max-width: 20rem; }
+  @media (max-width: 40rem) {
+    .phase { grid-template-columns: 1fr; gap: .6rem; }
+    .phase-shot { flex-direction: column; align-items: flex-start; }
+  }
+
+  .endings {
+    margin-top: 1.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px dashed var(--hair);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .endings .eyebrow { margin-bottom: 1rem; grid-column: 1 / -1; }
+  .ending { display: flex; gap: 1rem; align-items: flex-start; }
+  .ending .frame img { width: 96px; }
+  .ending .phase-line { font-size: 1.05rem; }
+  .ending .phase-note { font-size: .82rem; }
+  @media (max-width: 40rem) {
+    .endings { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- facelessness aside ---------- */
+  .faceless {
+    text-align: center;
+    padding: 3rem var(--edge);
+  }
+  .faceless .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    color: var(--sepia);
+    margin: 1rem 0;
+  }
+  .faceless .cite {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .08em;
+    color: var(--faint);
+  }
+
+  /* ---------- two devils ---------- */
+  .devils {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin-top: 2.25rem;
+  }
+  .devil {
+    border: 1px solid var(--hair);
+    border-radius: 8px;
+    padding: 1.75rem;
+    background: linear-gradient(180deg, var(--ink-3), transparent 60%);
+  }
+  .devil h3 {
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin: 0 0 1rem;
+  }
+  .devil .status {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    border: 1px solid var(--hair);
+    border-radius: 2px;
+    padding: .2em .5em;
+    margin-bottom: 1rem;
+  }
+  .devil .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--bone);
+    font-size: 1rem;
+    margin: 1rem 0;
+    white-space: pre-line;
+  }
+  @media (max-width: 40rem) {
+    .devils { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- mechanics ---------- */
+  .mech-table { margin-top: 2rem; border-top: 1px solid var(--hair); }
+  .mech-row {
+    display: grid;
+    grid-template-columns: 11rem 1fr 6rem;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--hair);
+  }
+  .mech-name { font-family: var(--mono); font-size: .82rem; letter-spacing: .06em; color: var(--bone); }
+  .mech-desc { color: var(--dim); font-size: .92rem; }
+  .mech-status { font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; text-align: right; }
+  .mech-status.built { color: var(--red); }
+  .mech-status.named { color: var(--faint); }
+  @media (max-width: 40rem) {
+    .mech-row { grid-template-columns: 1fr; gap: .35rem; }
+    .mech-status { text-align: left; }
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    padding: 3.5rem var(--edge) 4rem;
+    border-top: 1px solid var(--hair);
+    text-align: center;
+  }
+  footer .closing {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--dim);
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+  }
+  footer .links {
+    font-family: var(--mono);
+    font-size: .75rem;
+    letter-spacing: .06em;
+    color: var(--faint);
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  footer .links a { color: var(--dim); }
+</style>
+</head>
+<body>
+
+<div class="scroll-eye" aria-hidden="true">
+  <span class="eye"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
+</div>
+<div class="grain-field" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="eyebrow">a sleep aid</div>
+  <h1>LULL</h1>
+  <p class="hook">
+    Not &ldquo;a scary game on a phone&rdquo; — <strong>the scary thing is the phone.</strong>
+    It is in your hand, it has a camera on your face and a mic in your room,
+    it knows it is late, and it can reach you after you have closed it.
+  </p>
+  <div class="badges">
+    <span class="badge">v0.1 — vertical slice</span>
+    <span class="badge">iOS 17+</span>
+    <span class="badge">MIT licensed</span>
+  </div>
+  <div class="hud"><span class="dot"></span>REC · SUBJECT: YOU · LOCAL TIME: 03:33 · FRONT CAMERA: ACTIVE · 1 OTHER IS ALSO AWAKE</div>
+  <div class="scrolldown">scroll<span class="arrow">↓</span></div>
+</header>
+
+<section class="consent">
+  <div class="measure">
+    <div class="eyebrow">the one rule</div>
+    <h2>Horror by permission, not violation</h2>
+    <p>
+      Every sensor LULL touches is <strong>opt-in, explained, and revocable.</strong>
+      Default is deny. The player always has a panic switch that revokes
+      everything at once.
+    </p>
+    <ul class="consent-rules">
+      <li><strong>Forbidden, forever</strong> — photos, contacts, location trails, health data,
+        and anything read without you knowing. Not &ldquo;not yet.&rdquo; Designed out:
+        <code>LULLKit.Sensor</code> has no case for them, so no code can even ask.</li>
+      <li><strong>No genuine harm</strong> — uncanny, not traumatizing. Never deceptive
+        about what's real; the dread is fiction, and stays legibly fiction.</li>
+      <li><strong>The fear comes from what you knowingly hand over</strong>, turned uncanny —
+        not from what's taken.</li>
+    </ul>
+    <div class="sensor-list">
+      the entire allow-list, in code: <span>camera · microphone · notifications · haptics · motion</span> — nothing else is nameable.
+    </div>
+    <div class="denial-proof">
+      <img src="screens/05-ending-denied.png" alt="LULL's ending screen after declining consent: 'you said no. nothing was written down. sleep well.'">
+      <div>
+        <div class="quote">&ldquo;you said no.<br>nothing was written down. sleep well.&rdquo;</div>
+        <div class="cap">Saying no is a real, complete ending — not a worse one. No guilt trip, no re-ask.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="blot-divider" aria-hidden="true">
+  <svg viewBox="0 0 200 140"><path d="M100,10 C60,15 40,35 45,55 C20,60 15,90 35,100 C25,120 45,135 70,125 C80,140 120,140 130,125 C155,135 175,120 165,100 C185,90 180,60 155,55 C160,35 140,15 100,10 Z"/></svg>
+</div>
+
+<section id="descent">
+  <div class="measure">
+    <div class="descent-intro">
+      <div class="eyebrow">the arc</div>
+      <h2>One phase machine, five states</h2>
+      <p>
+        Everything LULL does is driven by one small, tested state machine —
+        <code>EyeSession.Phase</code> — and one pure narration layer laid over
+        it, <code>Atmosphere</code>, that speaks in four literary registers
+        (Kafka, Beckett, Poe, and Bulgakov) but touches no sensor and can
+        never widen what the game is permitted to do. What follows are the
+        real, shipped lines a player actually meets, phase by phase — keep
+        scrolling, and watch the eye behind the page open with you.
+      </p>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">01</span>dormant</div>
+      <div class="phase-body">
+        <p class="phase-note">Before anything begins. Nothing has started, so nothing speaks —
+          the one phase <code>Atmosphere</code> stays silent for.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">02</span>seekingConsent</div>
+      <div class="phase-body">
+        <p class="phase-line">a file is opening in your name.</p>
+        <p class="phase-note">Kafka's register — the threshold. Asked in-app, before any OS
+          prompt. Two real choices, both safe: <em>let it watch</em>, or <em>not tonight</em>.</p>
+        <figure class="phase-shot">
+          <div class="frame">
+            <img src="screens/01-consent-title.png" alt="LULL's consent screen: 'so LULL can see your face in the dark. you can turn this off at any time,' with LET IT WATCH / NOT TONIGHT choices">
+            <span class="frame-tag">seekingConsent</span>
+          </div>
+          <figcaption>Consent, asked plainly and refusable — this is the whole rule, on screen before anything else.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">03</span>watching</div>
+      <div class="phase-body">
+        <p class="phase-line">close your eyes.<br>let it watch for you.</p>
+        <p class="phase-note">Beckett's register — the lull. Calm, on purpose: the eye has to
+          be trustworthy first, or nothing else has anywhere to escalate from.</p>
+        <figure class="phase-shot">
+          <div class="frame">
+            <img src="screens/02-watching.png" alt="THE EYE, phase watching, early narration: 'the light is going, let it go'">
+            <span class="frame-tag">watching</span>
+          </div>
+          <figcaption>The eye opens. Kafka's threshold has closed; the calm begins.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">04</span>noticing</div>
+      <div class="phase-body">
+        <p class="phase-line">you're still awake.<br>so is it.</p>
+        <p class="phase-note">Poe's register begins. Something turns to face you; a small sound
+          starts, yours or the floor's. Escalation is pacing, never a jump scare.</p>
+        <figure class="phase-shot">
+          <div class="frame">
+            <img src="screens/03-noticing.png" alt="THE EYE, phase noticing, narration: 'a small sound now, yours or the floor's'">
+            <span class="frame-tag">noticing</span>
+          </div>
+          <figcaption>The circle and the copy tighten together — the watch stirs.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-name"><span class="n">05</span>awake</div>
+      <div class="phase-body">
+        <p class="phase-line">it knows your face now.</p>
+        <p class="phase-note">The ceiling. It has stopped behaving like software. This is as far
+          as the vertical slice goes — and the &ldquo;close the eye&rdquo; control is visible
+          the entire time, from the first frame the camera opens.</p>
+        <figure class="phase-shot">
+          <div class="frame">
+            <img src="screens/04-awake.png" alt="THE EYE, phase awake, narration: 'put the phone down, it will keep your face'">
+            <span class="frame-tag">awake</span>
+          </div>
+          <figcaption>Near the end of the watch — the register at its most direct.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="endings">
+      <div class="eyebrow">or, at any point</div>
+      <div class="ending">
+        <div class="frame">
+          <img src="screens/05-ending-denied.png" alt="Ending screen after declining consent">
+        </div>
+        <div>
+          <p class="phase-line">you said no.<br>nothing was written down. sleep well.</p>
+          <p class="phase-note">denied — terminal, and merciful. Kafka closes the case that never opened.</p>
+        </div>
+      </div>
+      <div class="ending">
+        <div class="frame">
+          <img src="screens/06-ending-released.png" alt="Ending screen after closing the eye">
+        </div>
+        <div>
+          <p class="phase-line">the eye is closed.<br>nothing watches now. it was only a game.</p>
+          <p class="phase-note">released — the panic switch, honored from any phase, at any time. Beckett's register, letting go cleanly.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="faceless">
+  <div class="eyebrow">what's withheld</div>
+  <div class="quote">&ldquo;implication over reveal.&rdquo;</div>
+  <div class="cite">docs/ideation/mirror-and-still-here.md — no face is ever shown on screen. Only the eye, and what it implies.</div>
+</div>
+
+<div class="blot-divider" aria-hidden="true">
+  <svg viewBox="0 0 200 140"><path d="M100,10 C60,15 40,35 45,55 C20,60 15,90 35,100 C25,120 45,135 70,125 C80,140 120,140 130,125 C155,135 175,120 165,100 C185,90 180,60 155,55 C160,35 140,15 100,10 Z"/></svg>
+</div>
+
+<section class="two-devils">
+  <div class="measure">
+    <div class="eyebrow">the voice</div>
+    <h2>Two ways to be afraid</h2>
+    <p>
+      Bulgakov's register doesn't own a single act the way Kafka, Beckett, and
+      Poe do — he's a throughline, an aside spoken alongside whichever
+      register owns the moment, hospitable at first and curdling as the
+      session deepens.
+    </p>
+    <div class="devils">
+      <div class="devil">
+        <h3>Dread as wit</h3>
+        <span class="status">shipped</span>
+        <p>The fear of being toyed with by something that has more agency
+          than you, is enjoying itself, and is always one step ahead. It
+          escalates by <em>gaining</em> presence — more familiar, more
+          revealing — until it openly admits what it always was.</p>
+        <div class="quote">&ldquo;do come in. we've been expecting you<br>for rather longer than you'd guess.&rdquo;</div>
+        <div class="quote">&ldquo;manuscripts, they say, don't burn.<br>neither, it turns out, do i.&rdquo;</div>
+      </div>
+      <div class="devil">
+        <h3>Dread as paralysis</h3>
+        <span class="status">design notebook, not shipped</span>
+        <p>A second idea, still just a note in the design docs: the fear of
+          proximity to something that cannot stop, cannot notice you, and
+          cannot be reached. It escalates by <em>losing</em> range — fewer
+          words, the same words, less give.</p>
+        <div class="quote">&ldquo;i have already said everything<br>i am going to say.&rdquo;</div>
+        <p style="font-size:.82rem; color:var(--faint);">Proposed copy from <code>docs/ideation/two-devils-wit-and-paralysis.md</code> — not yet in the game.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="blot-divider" aria-hidden="true">
+  <svg viewBox="0 0 200 140"><path d="M100,10 C60,15 40,35 45,55 C20,60 15,90 35,100 C25,120 45,135 70,125 C80,140 120,140 130,125 C155,135 175,120 165,100 C185,90 180,60 155,55 C160,35 140,15 100,10 Z"/></svg>
+</div>
+
+<section class="mechanics">
+  <div class="measure">
+    <div class="eyebrow">the mechanic</div>
+    <h2>One mechanic, built. Five more, named.</h2>
+    <p>
+      The whole bet, in one question: <strong>does it make one person, alone
+      at night, put the phone face-down?</strong> If yes, everything else is
+      worth building. <code>THE EYE</code> is the only mechanic built so
+      far — the front camera, consent-gated, calm at first. The rest are
+      named in the concept doc, not yet built.
+    </p>
+    <div class="mech-table">
+      <div class="mech-row">
+        <div class="mech-name">THE EYE</div>
+        <div class="mech-desc">the front camera — it watches you, and reacts to your face</div>
+        <div class="mech-status built">built</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE ROOM</div>
+        <div class="mech-desc">the microphone — it hears the silence, and what breaks it</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE REACH</div>
+        <div class="mech-desc">a notification at 3am, while the app is closed</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE HOUR</div>
+        <div class="mech-desc">it plays differently when it is late and the room is still</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">THE PULSE</div>
+        <div class="mech-desc">a heartbeat in your palm, through haptics, not quite yours</div>
+        <div class="mech-status named">named</div>
+      </div>
+      <div class="mech-row">
+        <div class="mech-name">BEHIND YOU</div>
+        <div class="mech-desc">spatial audio, something just over your shoulder</div>
+        <div class="mech-status named">named</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="closing">Not scary yet. But it watches, it has a voice, and it never breaks the rule.</div>
+  <div class="links">
+    <a href="https://github.com/testtest126/LULL">github.com/testtest126/LULL</a>
+    <a href="https://github.com/testtest126/LULL/blob/main/LICENSE">MIT license</a>
+    <a href="https://github.com/testtest126/LULL/blob/main/docs/concept.md">concept brief</a>
+  </div>
+</footer>
+
+<script>
+  // Drives the single .scroll-eye's openness from real scroll position —
+  // no IntersectionObserver (the earlier draft's reveal system used one and
+  // its "in view" state never fired reliably under some capture/scroll
+  // paths; this avoids that class of bug entirely). A plain `scroll`
+  // listener, throttled to one measurement per animation frame, computing a
+  // 0..1 progress through #descent and writing it to the shared
+  // --scroll-lid custom property that .scroll-eye's clip-path already
+  // reads. Nothing here ever touches the visibility, opacity, or presence
+  // of any real content — only this one decorative element's clip amount —
+  // so if the script fails to run for any reason the page still renders
+  // completely, just with the eye held at its calm CSS default.
+  (function () {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var root = document.documentElement;
+    var descent = document.getElementById('descent');
+
+    // Same 2%..42% range the earlier five discrete states spanned.
+    var MIN_LID = 2, MAX_LID = 42;
+
+    if (reduced || !descent) {
+      // Calm, fixed, no motion — the :root default (25%) already covers
+      // this, but set it explicitly so it's not relying on cascade alone.
+      root.style.setProperty('--scroll-lid', '25%');
+      return;
+    }
+
+    var ticking = false;
+
+    function progress() {
+      var rect = descent.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      var total = rect.height + vh;
+      if (total <= 0) return 0;
+      var traveled = vh - rect.top;
+      return Math.max(0, Math.min(1, traveled / total));
+    }
+
+    function update() {
+      var p = progress();
+      var lid = MIN_LID + p * (MAX_LID - MIN_LID);
+      root.style.setProperty('--scroll-lid', lid.toFixed(2) + '%');
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+  })();
+</script>
+</body>
+</html>

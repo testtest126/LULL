@@ -125,7 +125,7 @@ final class AtmosphereTests: XCTestCase {
             let bulgakovText = lines.filter { $0.voice == .bulgakov }.map(\.text).joined().lowercased()
             XCTAssertTrue(bulgakovText.contains("burn"), "dwell \(dwell): should still be the triumphant pairing")
             XCTAssertFalse(bulgakovText.contains("no longer remember"), "dwell \(dwell): not the paralysis pairing yet")
-            XCTAssertEqual(lines.count, 6, "poe's four lines plus one bulgakov pairing")
+            XCTAssertEqual(lines.count, 7, "poe's five lines plus one bulgakov pairing")
         }
         // Calling without dwellBeats at all must match dwellBeats: 0 exactly —
         // existing call sites (and testBulgakovCurdlesFromHospitableToRevealed)
@@ -135,14 +135,14 @@ final class AtmosphereTests: XCTestCase {
 
     /// A player who lingers at the ceiling meets the other devil: Bulgakov's
     /// paralysis pairing, in the register of Dante's frozen, mute Lucifer —
-    /// Poe's own four lines are unchanged either way; only Bulgakov's aside forks.
+    /// Poe's own five lines are unchanged either way; only Bulgakov's aside forks.
     func testAwakeSwitchesToParalysisWhenThePlayerLingers() {
         for dwell in [Atmosphere.awakeParalysisThresholdBeats, Atmosphere.awakeParalysisThresholdBeats + 5] {
             let lines = Atmosphere.script(for: .awake, dwellBeats: dwell)
             let bulgakovText = lines.filter { $0.voice == .bulgakov }.map(\.text).joined().lowercased()
             XCTAssertTrue(bulgakovText.contains("no longer remember"), "dwell \(dwell): should be the paralysis pairing")
             XCTAssertFalse(bulgakovText.contains("burn"), "dwell \(dwell): not the triumphant pairing anymore")
-            XCTAssertEqual(lines.count, 6, "poe's four lines plus one bulgakov pairing, same shape either way")
+            XCTAssertEqual(lines.count, 7, "poe's five lines plus one bulgakov pairing, same shape either way")
 
             let poeText = lines.filter { $0.voice == .poe }.map(\.text)
             XCTAssertEqual(poeText, Atmosphere.script(for: .awake, dwellBeats: 0).filter { $0.voice == .poe }.map(\.text),
@@ -188,5 +188,26 @@ final class AtmosphereTests: XCTestCase {
             XCTAssertFalse(paralysisText.contains(phrase),
                            "paralysis copy must stay original, not quote a known Inferno translation")
         }
+    }
+
+    /// A tiny half-seen touch: something crosses the edge of frame and is
+    /// gone, in Poe's register, alongside his existing noticing lines — never
+    /// shown, never described, only implied. Poe still speaks first at the
+    /// default beat, so this doesn't change what the player meets on arrival.
+    func testNoticingCarriesAnEdgeOfFrameLine() {
+        let poeText = Atmosphere.script(for: .noticing)
+            .filter { $0.voice == .poe }.map(\.text).joined(separator: " ").lowercased()
+        XCTAssertTrue(poeText.contains("edge of frame"), "noticing should carry the edge-of-frame beat")
+        XCTAssertEqual(Atmosphere.narration(for: .noticing)?.voice, .poe, "poe still speaks first by default")
+    }
+
+    /// A tiny, strictly retrospective glimpse at the ceiling — the closest
+    /// this register comes to a "glimpsed face," and it stays uncanny, not
+    /// gory: one frame, already corrected, nothing described or lingered on.
+    func testAwakeCarriesAGlimpsedFaceLine() {
+        let poeText = Atmosphere.script(for: .awake)
+            .filter { $0.voice == .poe }.map(\.text).joined(separator: " ").lowercased()
+        XCTAssertTrue(poeText.contains("wasn't your face"), "awake should carry the glimpsed-face beat")
+        XCTAssertFalse(poeText.contains("scream"), "the glimpse stays suggestive, never depicted")
     }
 }
