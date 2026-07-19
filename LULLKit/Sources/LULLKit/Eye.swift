@@ -41,6 +41,13 @@ public struct EyeSession: Sendable, Equatable {
 
     public private(set) var phase: Phase
     public private(set) var elapsed: TimeInterval
+    /// How long the eye has been `awake`. Unlike `elapsed` (which stops
+    /// advancing once `awake` is reached — it marks *when the ceiling was
+    /// reached*, not how long the player has stayed there), this keeps
+    /// counting for as long as the player lingers at the ceiling, so the app
+    /// (and `Atmosphere`) can tell a player who glances at `awake` and closes
+    /// the eye apart from one who stays. See `Atmosphere.awakeParalysisThresholdBeats`.
+    public private(set) var awakeElapsed: TimeInterval
 
     /// How long the calm lasts before it starts to notice.
     public var calmSeconds: TimeInterval
@@ -50,6 +57,7 @@ public struct EyeSession: Sendable, Equatable {
     public init(calmSeconds: TimeInterval = 40, noticingSeconds: TimeInterval = 30) {
         self.phase = .dormant
         self.elapsed = 0
+        self.awakeElapsed = 0
         self.calmSeconds = calmSeconds
         self.noticingSeconds = noticingSeconds
     }
@@ -71,12 +79,22 @@ public struct EyeSession: Sendable, Equatable {
     /// Advance the experience by `dt` seconds. Only meaningful while the eye is
     /// open; a negative or huge `dt` (e.g. after backgrounding) is clamped.
     public mutating func advance(by dt: TimeInterval) {
-        guard phase == .watching || phase == .noticing else { return }
-        elapsed += min(max(0, dt), 5)
-        if elapsed >= calmSeconds + noticingSeconds {
-            phase = .awake
-        } else if elapsed >= calmSeconds {
-            phase = .noticing
+        let clamped = min(max(0, dt), 5)
+        switch phase {
+        case .watching, .noticing:
+            elapsed += clamped
+            if elapsed >= calmSeconds + noticingSeconds {
+                phase = .awake
+            } else if elapsed >= calmSeconds {
+                phase = .noticing
+            }
+        case .awake:
+            // The ceiling has no further phase to escalate into by the clock —
+            // `elapsed` intentionally stops here. `awakeElapsed` is the
+            // separate, ongoing count of how long the player has stayed.
+            awakeElapsed += clamped
+        case .dormant, .seekingConsent, .denied, .released:
+            return
         }
     }
 

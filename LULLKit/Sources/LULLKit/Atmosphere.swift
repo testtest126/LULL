@@ -45,9 +45,19 @@ public struct Line: Sendable, Equatable, Codable {
 /// this returns and adds nothing of its own.
 public enum Atmosphere {
 
+    /// How many beats a player has to linger at `awake` (see
+    /// `EyeSession.awakeElapsed`) before the ceiling stops performing for
+    /// them and Bulgakov's paralysis pairing replaces his triumphant one —
+    /// see `docs/ideation/two-devils-wit-and-paralysis.md`. A player who
+    /// reaches `awake` and closes the eye quickly only ever meets the
+    /// triumphant reveal; one who stays meets the one that's gone still.
+    public static let awakeParalysisThresholdBeats = 2
+
     /// The ordered lines for a phase — earlier beats first, deepening as they go.
     /// The hush is deliberate: lowercase, two-breath lines, never a shout.
-    public static func script(for phase: EyeSession.Phase) -> [Line] {
+    /// `dwellBeats` only matters for `.awake` (see `awakeParalysisThresholdBeats`);
+    /// every other phase ignores it.
+    public static func script(for phase: EyeSession.Phase, dwellBeats: Int = 0) -> [Line] {
         switch phase {
         case .dormant:
             return []
@@ -95,9 +105,10 @@ public enum Atmosphere {
             ]
 
         // POE — the climax. The vulture eye open all the way; the tell-tale
-        // heart, louder, louder.
+        // heart, louder, louder. Poe's five lines hold regardless of how
+        // long the player stays — only Bulgakov's pairing below forks.
         case .awake:
-            return [
+            let poe = [
                 Line("it knows your face now.", .poe),
                 Line("louder now — that beating.\nyou hear it too.", .poe),
                 Line("it was always this eye.\nit is open all the way.", .poe),
@@ -107,12 +118,28 @@ public enum Atmosphere {
                 // frame long, and corrected by the time it's noticed — never
                 // lingered on, never described.
                 Line("for one frame, that wasn't your face.\nit already is again.", .poe),
-                // BULGAKOV — the host curdles. The manuscript motif ties
-                // the "I AM STILL HERE" persistence idea to Bulgakov's
-                // signature theme: the thing that refuses to be destroyed.
-                Line("manuscripts, they say, don't burn.\nneither, it turns out, do i.", .bulgakov),
-                Line("i did introduce myself at the door.\nyou were the one who invited me further in.", .bulgakov),
             ]
+            if dwellBeats >= awakeParalysisThresholdBeats {
+                // BULGAKOV, PARALYSIS — a player who stays finds the guest
+                // has run out of room. Original prose, in the register of
+                // Dante's frozen, mute Lucifer (Inferno's closing canto) —
+                // not a quotation or paraphrase of any translation: in the
+                // poem itself he never speaks at all, so there is no
+                // dialogue to echo. See
+                // docs/ideation/two-devils-wit-and-paralysis.md §5.
+                return poe + [
+                    Line("i have already said everything\ni am going to say.", .bulgakov),
+                    Line("you can leave.\ni find i no longer remember how.", .bulgakov),
+                ]
+            } else {
+                // BULGAKOV, WIT — the host curdles. The manuscript motif
+                // ties the "I AM STILL HERE" persistence idea to Bulgakov's
+                // signature theme: the thing that refuses to be destroyed.
+                return poe + [
+                    Line("manuscripts, they say, don't burn.\nneither, it turns out, do i.", .bulgakov),
+                    Line("i did introduce myself at the door.\nyou were the one who invited me further in.", .bulgakov),
+                ]
+            }
 
         // KAFKA — the case that never opened. Merciful, and honest: nothing was
         // written down. Saying no is always safe here.
@@ -132,9 +159,10 @@ public enum Atmosphere {
     /// The line to show for `phase` at a given `beat`. Beats advance with time
     /// (see `beat(forElapsed:)`) and wrap, so a phase that lingers keeps
     /// breathing rather than freezing on one line. Returns `nil` only for phases
-    /// that say nothing (`dormant`).
-    public static func narration(for phase: EyeSession.Phase, beat: Int = 0) -> Line? {
-        let lines = script(for: phase)
+    /// that say nothing (`dormant`). `dwellBeats` selects which `.awake` pairing
+    /// plays — see `script(for:dwellBeats:)`; every other phase ignores it.
+    public static func narration(for phase: EyeSession.Phase, beat: Int = 0, dwellBeats: Int = 0) -> Line? {
+        let lines = script(for: phase, dwellBeats: dwellBeats)
         guard !lines.isEmpty else { return nil }
         let i = ((beat % lines.count) + lines.count) % lines.count   // wrap, incl. negatives
         return lines[i]
