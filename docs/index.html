@@ -22,6 +22,15 @@
     --faint:  #454b55;
     --red:    #a8433f;
 
+    /* Prototype-only warm palette for the rose-window eye variant (see
+       .rose-eye below) — kept separate from the cold palette above on
+       purpose, so the two apertures read as genuinely different registers
+       side by side, not the same design in a different hue. */
+    --amber:      #d9a44c;
+    --amber-deep: #9c6a24;
+    --amber-pale: #f3d9a8;
+    --stone:      #5b5348;
+
     --hair:   rgba(217, 210, 196, .08);
 
     --sans:  -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -136,16 +145,80 @@
      section's own background/text still paints over it normally, so it
      reads most clearly wherever a section has no opaque background of its
      own — which is exactly the phase-descent section this is built for. */
+  /* PROTOTYPE COMPARISON — the eye is offset to the left half of the
+     viewport (32%) instead of dead-center (50%) so the new .rose-eye
+     variant below can sit at 68% without overlapping it. This offset is
+     the only change made to .scroll-eye itself for this comparison; its
+     mechanic, palette, and behavior are otherwise completely untouched. */
   .scroll-eye {
     position: fixed;
-    top: 50%; left: 50%;
+    top: 50%; left: 32%;
     transform: translate(-50%, -50%);
     z-index: -1;
-    width: min(46vw, 26rem);
+    width: min(40vw, 22rem);
     opacity: .14;
     pointer-events: none;
   }
   .scroll-eye .eye { --lid: var(--scroll-lid); width: 100%; }
+
+  /* ---------- rose-window eye (prototype variant, side by side with
+     .scroll-eye above — NOT a replacement) ----------
+     Same mechanic, same shared --scroll-lid value, same reduced-motion
+     handling (all inherited for free — nothing about the scroll listener
+     or the reduced-motion branch changes for this variant). Only the
+     *shape* the clip-path reveals is different: instead of an eyelid-style
+     horizontal inset band, --scroll-lid is read as a `circle()` radius —
+     the aperture dilates outward from the center, which reads more like a
+     literal iris/pupil opening for a circular rose window than a band-clip
+     eyelid would. The 2%..42% range --scroll-lid already produces (see the
+     script at the end of body) works unchanged for either interpretation. */
+  .rose-eye {
+    position: fixed;
+    top: 50%; left: 68%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    width: min(40vw, 22rem);
+    aspect-ratio: 1;
+    opacity: .2;
+    pointer-events: none;
+  }
+  .rose-eye svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    clip-path: circle(var(--scroll-lid) at 50% 50%);
+  }
+  .rose-window-ring       { fill: none; stroke: var(--stone); stroke-width: 1.4; opacity: .5; }
+  .rose-window-ring-outer { fill: none; stroke: var(--stone); stroke-width: .8; opacity: .25; }
+  .rose-window-petals     { fill: url(#roseGlow); opacity: .85; }
+  .rose-window-pupil      { fill: var(--ink); }
+  .rose-window-pupil-rim  { fill: none; stroke: var(--amber); stroke-width: .6; opacity: .55; }
+
+  .eye-compare-label {
+    position: fixed;
+    top: calc(50% + 15vw);
+    font-family: var(--mono);
+    font-size: .6rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--faint);
+    z-index: -1;
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+  .eye-compare-label--cold { left: 32%; }
+  .eye-compare-label--rose { left: 68%; }
+
+  @media (max-width: 40rem) {
+    .scroll-eye, .rose-eye {
+      left: 50%;
+      width: min(58vw, 18rem);
+    }
+    .scroll-eye { top: 40%; }
+    .rose-eye   { top: 63%; }
+    .eye-compare-label--cold { left: 50%; top: calc(40% + 12vw); }
+    .eye-compare-label--rose { left: 50%; top: calc(63% + 10vw); }
+  }
 
   /* ---------- ink-blot divider (original, generated — not copied) ----------
      A hand-authored, roughly bilateral closed path, softened with a blur
@@ -333,6 +406,15 @@
 
   /* ---------- phase descent ---------- */
   .descent-intro { margin-bottom: 3rem; }
+  .prototype-note {
+    margin-top: 1.5rem;
+    padding: 1rem 1.2rem;
+    border: 1px dashed var(--amber-deep);
+    border-radius: 6px;
+    font-size: .82rem;
+    color: var(--dim);
+  }
+  .prototype-note strong { color: var(--amber); }
 
   .phase {
     display: grid;
@@ -521,9 +603,62 @@
 </head>
 <body>
 
+<!-- PROTOTYPE: comparing the shipped eye against a rose-window variant,
+     side by side. Both read the same --scroll-lid value computed by the
+     one script at the end of body; this markup adds a second consumer of
+     that value, not a second mechanism. Delete this comment and whichever
+     variant loses before merging anywhere real. -->
 <div class="scroll-eye" aria-hidden="true">
   <span class="eye"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
 </div>
+<div class="eye-compare-label eye-compare-label--cold" aria-hidden="true">current</div>
+
+<div class="rose-eye" aria-hidden="true">
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <radialGradient id="roseGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"  stop-color="#d9a44c" stop-opacity="0"/>
+        <stop offset="55%" stop-color="#d9a44c" stop-opacity=".55"/>
+        <stop offset="100%" stop-color="#9c6a24" stop-opacity=".18"/>
+      </radialGradient>
+      <radialGradient id="roseCandle" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#f3d9a8" stop-opacity=".95"/>
+        <stop offset="100%" stop-color="#d9a44c" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="roseCandleBlur" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.4"/>
+      </filter>
+    </defs>
+    <circle class="rose-window-ring-outer" cx="50" cy="50" r="41"/>
+    <g class="rose-window-petals">
+      <path transform="rotate(0 50 50)"   d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(30 50 50)"  d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(60 50 50)"  d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(90 50 50)"  d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(120 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(150 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(180 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(210 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(240 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(270 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(300 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+      <path transform="rotate(330 50 50)" d="M50,37 Q42,20 50,7 Q58,20 50,37 Z"/>
+    </g>
+    <circle class="rose-window-ring" cx="50" cy="50" r="38"/>
+    <g aria-hidden="true">
+      <circle cx="74" cy="38" r="1.6" fill="url(#roseCandle)" filter="url(#roseCandleBlur)"/>
+      <circle cx="30" cy="32" r="1.3" fill="url(#roseCandle)" filter="url(#roseCandleBlur)"/>
+      <circle cx="26" cy="64" r="1.8" fill="url(#roseCandle)" filter="url(#roseCandleBlur)"/>
+      <circle cx="58" cy="72" r="1.4" fill="url(#roseCandle)" filter="url(#roseCandleBlur)"/>
+      <circle cx="68" cy="58" r="1.2" fill="url(#roseCandle)" filter="url(#roseCandleBlur)"/>
+      <circle cx="40" cy="26" r="1.5" fill="url(#roseCandle)" filter="url(#roseCandleBlur)"/>
+    </g>
+    <circle class="rose-window-pupil" cx="50" cy="50" r="13"/>
+    <circle class="rose-window-pupil-rim" cx="50" cy="50" r="13"/>
+  </svg>
+</div>
+<div class="eye-compare-label eye-compare-label--rose" aria-hidden="true">rose window (prototype)</div>
+
 <div class="grain-field" aria-hidden="true"></div>
 
 <header class="hero">
@@ -592,6 +727,13 @@
         real, shipped lines a player actually meets, phase by phase — keep
         scrolling, and watch the eye behind the page open with you.
       </p>
+      <div class="prototype-note">
+        <strong>Prototype note:</strong> two eyes are running behind this
+        page right now, both driven by the same scroll — <em>current</em>
+        (cold, almond-shaped, left) and <em>rose window</em> (warm,
+        circular, right). Same mechanic, same scroll value, different
+        shape. This note and the comparison labels are prototype-only.
+      </div>
     </div>
 
     <div class="phase">
