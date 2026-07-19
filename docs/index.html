@@ -30,13 +30,27 @@
 
     --measure: 38rem;
     --edge: clamp(1.25rem, 6vw, 4rem);
+
+    /* The aperture's default/fallback openness — a calm, half-open state.
+       This is what renders if JS never runs at all (blocked, fails, etc.)
+       and is exactly what's used, unchanged, under prefers-reduced-motion —
+       see the script at the end of body. Everything else on the page is
+       real content and never depends on this value; it only ever drives
+       the decorative eye's clip-path. */
+    --scroll-lid: 25%;
   }
 
   * { box-sizing: border-box; }
+  /* html carries the base color; body deliberately does NOT repeat it.
+     body is a normal in-flow box with no stacking context of its own, so an
+     opaque body background paints in the same step as body's own content —
+     which is *after* any negative-z-index descendant of the root (like
+     .scroll-eye below). Two backgrounds at the same color looked identical
+     and hid the eye completely; one, on html only, lets --scroll-eye's
+     z-index: -1 actually show through. */
   html { background: var(--ink); }
   body {
     margin: 0;
-    background: var(--ink);
     color: var(--bone);
     font-family: var(--sans);
     line-height: 1.6;
@@ -99,12 +113,11 @@
   }
 
   /* ---------- the eye / aperture motif ----------
-     One reusable glyph, five static states (open amount fixed per phase —
-     no scroll-linked JS, nothing animates on scroll). The "opening" is
-     simply the document's own order: dormant is shut, awake is widest, the
-     two endings shut again. clip-path reveals more of the same iris/pupil
-     as --lid grows; nothing about visibility of real content depends on
-     this, it is purely decorative. */
+     One reusable glyph. Its clip-path reveals more of the same iris/pupil
+     as --lid grows; nothing about visibility of real *content* ever depends
+     on this — it is purely decorative, so a failure in the script below
+     never breaks the page, it just leaves the eye at its calm CSS default
+     (--scroll-lid: 25%, declared on :root). */
   .eye {
     display: inline-block;
     width: 46px;
@@ -115,13 +128,24 @@
   .eye-iris  { fill: none; stroke: var(--sepia); stroke-width: 2; opacity: .6; }
   .eye-pupil { fill: var(--red); opacity: .55; }
 
-  .eye--closed  { --lid: 2%; }
-  .eye--sliver  { --lid: 9%; }
-  .eye--quarter { --lid: 18%; }
-  .eye--half    { --lid: 29%; }
-  .eye--open    { --lid: 40%; }
-
-  .eye--hero { width: min(52vw, 30rem); opacity: .16; }
+  /* A single continuous aperture, fixed to the viewport, present for the
+     whole page. Its openness — --lid, here reading the shared, scroll-
+     updated --scroll-lid custom property instead of a fixed value — is
+     what makes it "the eye that opens as you scroll" rather than five
+     separate icons. Sits behind normal page content (z-index: -1); every
+     section's own background/text still paints over it normally, so it
+     reads most clearly wherever a section has no opaque background of its
+     own — which is exactly the phase-descent section this is built for. */
+  .scroll-eye {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    width: min(46vw, 26rem);
+    opacity: .14;
+    pointer-events: none;
+  }
+  .scroll-eye .eye { --lid: var(--scroll-lid); width: 100%; }
 
   /* ---------- ink-blot divider (original, generated — not copied) ----------
      A hand-authored, roughly bilateral closed path, softened with a blur
@@ -147,13 +171,6 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-  }
-  .hero-eye {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: -1;
-    pointer-events: none;
   }
   .hero::after {
     content: "";
@@ -327,9 +344,6 @@
   .phase + .phase { border-top: 1px solid var(--hair); }
 
   .phase-name {
-    display: flex;
-    flex-direction: column;
-    gap: .75rem;
     font-family: var(--mono);
     font-size: .78rem;
     letter-spacing: .12em;
@@ -375,7 +389,6 @@
   .phase-shot figcaption { font-size: .8rem; color: var(--faint); max-width: 20rem; }
   @media (max-width: 40rem) {
     .phase { grid-template-columns: 1fr; gap: .6rem; }
-    .phase-name { flex-direction: row; align-items: center; }
     .phase-shot { flex-direction: column; align-items: flex-start; }
   }
 
@@ -508,12 +521,12 @@
 </head>
 <body>
 
+<div class="scroll-eye" aria-hidden="true">
+  <span class="eye"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
+</div>
 <div class="grain-field" aria-hidden="true"></div>
 
 <header class="hero">
-  <div class="hero-eye eye eye--hero" aria-hidden="true">
-    <svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg>
-  </div>
   <div class="eyebrow">a sleep aid</div>
   <h1>LULL</h1>
   <p class="hook">
@@ -576,17 +589,13 @@
         it, <code>Atmosphere</code>, that speaks in four literary registers
         (Kafka, Beckett, Poe, and Bulgakov) but touches no sensor and can
         never widen what the game is permitted to do. What follows are the
-        real, shipped lines a player actually meets, phase by phase — the eye
-        alongside each one only ever opens a little further; it shuts again
-        at either ending.
+        real, shipped lines a player actually meets, phase by phase — keep
+        scrolling, and watch the eye behind the page open with you.
       </p>
     </div>
 
     <div class="phase">
-      <div class="phase-name">
-        <span class="eye eye--closed" aria-hidden="true"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
-        <span><span class="n">01</span>dormant</span>
-      </div>
+      <div class="phase-name"><span class="n">01</span>dormant</div>
       <div class="phase-body">
         <p class="phase-note">Before anything begins. Nothing has started, so nothing speaks —
           the one phase <code>Atmosphere</code> stays silent for.</p>
@@ -594,10 +603,7 @@
     </div>
 
     <div class="phase">
-      <div class="phase-name">
-        <span class="eye eye--sliver" aria-hidden="true"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
-        <span><span class="n">02</span>seekingConsent</span>
-      </div>
+      <div class="phase-name"><span class="n">02</span>seekingConsent</div>
       <div class="phase-body">
         <p class="phase-line">a file is opening in your name.</p>
         <p class="phase-note">Kafka's register — the threshold. Asked in-app, before any OS
@@ -613,10 +619,7 @@
     </div>
 
     <div class="phase">
-      <div class="phase-name">
-        <span class="eye eye--quarter" aria-hidden="true"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
-        <span><span class="n">03</span>watching</span>
-      </div>
+      <div class="phase-name"><span class="n">03</span>watching</div>
       <div class="phase-body">
         <p class="phase-line">close your eyes.<br>let it watch for you.</p>
         <p class="phase-note">Beckett's register — the lull. Calm, on purpose: the eye has to
@@ -632,10 +635,7 @@
     </div>
 
     <div class="phase">
-      <div class="phase-name">
-        <span class="eye eye--half" aria-hidden="true"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
-        <span><span class="n">04</span>noticing</span>
-      </div>
+      <div class="phase-name"><span class="n">04</span>noticing</div>
       <div class="phase-body">
         <p class="phase-line">you're still awake.<br>so is it.</p>
         <p class="phase-note">Poe's register begins. Something turns to face you; a small sound
@@ -651,10 +651,7 @@
     </div>
 
     <div class="phase">
-      <div class="phase-name">
-        <span class="eye eye--open" aria-hidden="true"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
-        <span><span class="n">05</span>awake</span>
-      </div>
+      <div class="phase-name"><span class="n">05</span>awake</div>
       <div class="phase-body">
         <p class="phase-line">it knows your face now.</p>
         <p class="phase-note">The ceiling. It has stopped behaving like software. This is as far
@@ -678,7 +675,7 @@
         </div>
         <div>
           <p class="phase-line">you said no.<br>nothing was written down. sleep well.</p>
-          <p class="phase-note">denied — terminal, and merciful. Kafka closes the case that never opened. The eye shuts, same as it started.</p>
+          <p class="phase-note">denied — terminal, and merciful. Kafka closes the case that never opened.</p>
         </div>
       </div>
       <div class="ending">
@@ -798,5 +795,62 @@
   </div>
 </footer>
 
+<script>
+  // Drives the single .scroll-eye's openness from real scroll position —
+  // no IntersectionObserver (the earlier draft's reveal system used one and
+  // its "in view" state never fired reliably under some capture/scroll
+  // paths; this avoids that class of bug entirely). A plain `scroll`
+  // listener, throttled to one measurement per animation frame, computing a
+  // 0..1 progress through #descent and writing it to the shared
+  // --scroll-lid custom property that .scroll-eye's clip-path already
+  // reads. Nothing here ever touches the visibility, opacity, or presence
+  // of any real content — only this one decorative element's clip amount —
+  // so if the script fails to run for any reason the page still renders
+  // completely, just with the eye held at its calm CSS default.
+  (function () {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var root = document.documentElement;
+    var descent = document.getElementById('descent');
+
+    // Same 2%..42% range the earlier five discrete states spanned.
+    var MIN_LID = 2, MAX_LID = 42;
+
+    if (reduced || !descent) {
+      // Calm, fixed, no motion — the :root default (25%) already covers
+      // this, but set it explicitly so it's not relying on cascade alone.
+      root.style.setProperty('--scroll-lid', '25%');
+      return;
+    }
+
+    var ticking = false;
+
+    function progress() {
+      var rect = descent.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      var total = rect.height + vh;
+      if (total <= 0) return 0;
+      var traveled = vh - rect.top;
+      return Math.max(0, Math.min(1, traveled / total));
+    }
+
+    function update() {
+      var p = progress();
+      var lid = MIN_LID + p * (MAX_LID - MIN_LID);
+      root.style.setProperty('--scroll-lid', lid.toFixed(2) + '%');
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+  })();
+</script>
 </body>
 </html>
