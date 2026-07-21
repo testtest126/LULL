@@ -1,109 +1,89 @@
-# LULL — Moodboard
+# Moodboards — chess (MateMate) & LULL
 
-*Agent-facing style reference. Skim, don't read straight through. Code is the*
-*source of truth — this doc points at it rather than restating it, so it can't*
-*drift out of sync. See [`PILLARS.md`](../PILLARS.md) for the design rationale*
-*behind these choices.*
+Style reference for agents working in these repos. Two games, one maker, opposite moods — never blend them.
+Visual boards: `chess-moodboard.html` / `lull-moodboard.html` (self-contained, open in any browser).
 
-## Palette
+---
 
-**Source of truth is code, not this doc — two real token sets exist, and they
-differ slightly by design:**
+## 01 · MateMate (github.com/testtest126/chess)
 
-| token | in-app (`app/Sources/Theme.swift`) | landing page (`docs/index.html` `:root`) |
-|---|---|---|
-| ink (base) | `#07080a` | `#090c12` |
-| bone (text) | `#d7d5d0` | `#d9d2c4` |
-| dim (secondary text) | `#82858c` | `#838b93` |
-| faint (tertiary / hairlines) | `#494c53` | `#454b55` |
-| red (the one accent) | `#bb3b3b` | `#a8433f` |
-| sepia (iris only) | — | `#b9a179` |
-| cyan (sclera/stroke only) | — | `#7f9aa2` |
+**Mood:** warm · classical · native-first iOS · quiet craft · one real board, always.
+Feels like it shipped with iOS, warmed by the walnut of the classic board.
 
-The landing page's palette is deliberately "nudged" from the app's — cooler,
-more desaturated, more analog — for its own art direction; it is not a copy
-error. See the comment at the top of `docs/index.html`'s `:root` block.
+### Color
+- Accent: brass `#8A6216` (light) / gold `#E7BA5C` (dark). Never default iOS blue. (`AccentColor.colorset`)
+- Contrast rule (`Styling.swift · BrandCTALabelColor`): labels on gold fill — white in light mode, `#1F1F1F` in dark. White on `#E7BA5C` fails WCAG (<2:1).
+- Surfaces: cream `#F6EFE2` / card `#FFFDF8` (light); walnut `#171109` / card `#251C11` (dark). (`WarmBackground.colorset`)
+- Outcomes: won `#34C759` · lost `#FF3B30` · draw/ongoing `#8E8E93`.
+- Board themes (`BoardTheme.swift`, light/dark squares): Classic `#F0D9B5/#B58763` · Green `#EDEDD1/#759657` · Blue `#DEE5EE/#6B8CAD` · Gray `#E0E0E0/#8C8C91`.
 
-**If you were handed different hex values for this project** (a near-black
-`#0a0a0c`, a warm-dark `#2e2c26`, blood-red `#b00020`, off-white `#f0eee6`) —
-those are not in the codebase. Use the table above instead; flag the mismatch
-rather than silently adopting guessed values.
+### Type & voice
+SF / system only. Large Title 34 heavy · body 17 · row headline 15 semibold + outcome dot · detail 12 `#8E8E93`.
+Copy: plain, warm, unhurried. No exclamation marks.
 
-**Rules, either token set:**
-- One base near-black, one text color (used at full/dim/faint opacity — three
-  weights of the *same* color, not three colors).
-- Exactly **one** accent hue (red). It marks a status dot, a single word, an
-  ending, a hover state — never a second surface, never a gradient of itself
-  into something brighter.
-- Cold, desaturated, high-contrast-on-black. No warm fills anywhere outside
-  the iris.
+### Rules
+- Restyle *within* system idioms: real segmented controls, grouped cards, SF type. No web-look, no fantasy chrome in the app.
+- One real board wherever the brand appears (mini boards, position thumbnails, theme tiles).
+- Selection = 2px accent ring, offset −1.
+- Sign in with Apple: exactly stock, always.
+- Motion: default SwiftUI springs only; pieces slide, never bounce. If Settings.app wouldn't animate it, MateMate doesn't.
 
-## Typography & voice
+### Web skins (docs pages only — the iOS app never wears a costume)
+Same roles everywhere: ground / bone / gold / jade / flare.
+- `arabic` — kufic geometry, indigo + gold. ground `#0d1233`, bone `#ece7d6`, gold `#d4af37`, jade `#4fb0c4`, flare `#c1523f`. Display: Futura.
+- `indian` — lac red + marigold, didone. ground `#2a0f14`, bone `#f7ead0`, gold `#e8a020`, jade `#2bb3ad`, flare `#c81d3a`. Display: Didot.
+- `andalus` — azulejo + horseshoe geometry. ground `#062a28`, bone `#f0e6d2`, gold `#c9963c`, jade `#2fb3a6`, flare `#c1633f`. Display: Avenir Next.
+- `terminal` — CRT phosphor. ground `#080b0a`, bone `#c9d6c9`, gold/merged `#48d06a`, jade `#59d0c0`, flare `#e0574a`. Display: mono.
 
-- **System/status chrome** — thin, wide-tracked, **UPPERCASE MONO**. e.g. the
-  landing page's `.hud` line (`REC · SUBJECT: YOU · LOCAL TIME: 03:33 ·
-  FRONT CAMERA: ACTIVE · 1 OTHER IS ALSO AWAKE`) and `.eyebrow`/`.mech-status`
-  labels; in-app, `Theme.label` (`.caption2`, monospaced) rendered
-  `.textCase(.uppercase).tracking(2)` for `"watching"` and `"close the eye"`
-  (`app/Sources/EyeView.swift`). Chrome announces state; it does not narrate.
-- **Narration** — quiet **lowercase serif**, two-breath lines, never a shout.
-  `"the light is going.\nlet it go."` Source font stack: `--serif` in
-  `docs/index.html` (`ui-serif, "New York", …`).
-- **Voice registers are owned by `LULLKit/Sources/LULLKit/Atmosphere.swift` —
-  do not write new narration lines anywhere else.** Four registers, three
-  gating one phase each, one running throughout:
-  - **Kafka** — the threshold (`seekingConsent`, both endings' formal half): a
-    record opening in your name, the verdict withheld.
-  - **Beckett** — the lull (`watching`, and the calm/closing): waiting, the
-    failing light, the nothing that is also a mercy.
-  - **Poe** — the watch (`noticing` → `awake`): the eye that will not blink.
-  - **Bulgakov** — the guest: a throughline, not a phase-owner. Hospitable at
-    the threshold, curdling by `awake` into revealing he was never a guest.
-  Every line is original prose *in* each register, never a quotation — no
-  author's name ever appears on screen.
+---
 
-## UI fragments
+## 02 · LULL (github.com/testtest126/LULL)
 
-- **The eye** — a faint dark circle/aperture, barely resolving out of black.
-  In-app: `CameraPreview` desaturated and heavily dimmed/blurred, escalating
-  by phase (`app/Sources/EyeView.swift`). On the landing page: `.scroll-eye`,
-  a fixed, `opacity: .14` SVG glyph whose clip-path opens on scroll
-  (`--scroll-lid` in `docs/index.html`).
-- **Edge-of-frame labels** — small, corner- or edge-anchored, never centered
-  chrome competing with the content.
-- **Minimal chrome overall** — no icons beyond the eye motif, no drop
-  shadows or borders beyond a 1px hairline (`--hair`, ~8% opacity).
-- **Nothing shouts.** If an element draws the eye before the copy does,
-  it's wrong for this project.
+**Mood:** cold · minimal · quiet dread · restraint over spectacle · consent, always.
+A sleep aid that stops behaving like software. Not a scary game on a phone — the scary thing is the phone. "The unease is in the restraint, not the palette." (`Theme.swift`)
 
-## Tone words
+### Color
+- App (`Theme.swift`): ink `#07080a` · bone `#d7d5d0` · dim `#82858c` · faint `#494c53` · red `#bb3b3b`.
+- Landing (`docs/index.html`): ink `#090c12` · bone `#d9d2c4` · sepia `#b9a179` · cyan `#7f9aa2` · red `#a8433f`.
+- Icon ember: `#c0322c`.
+- Red appears in exactly one place at a time (REC dot, ember ring, a verdict). Two reds on screen is a bug.
 
-quiet dread · consent · watching · restraint · sleeplessness ·
-the intimate turned uncanny
+### Type
+- LABEL: caption2 mono, uppercase, tracking .1–.32em (e.g. `● WATCHING`).
+- TITLE: system 44 heavy, lowercase ("it is awake.").
+- BODY: system 17 — honest consent copy, plain, never altered for atmosphere.
+- NARRATION: serif, lowercase, two-breath lines, never a shout.
 
-## Do / Don't
+### Voice (Atmosphere.swift — original prose in each register, never a quotation; no author's name on screen)
+- Kafka — the threshold (seekingConsent, denied): "a file is opening in your name."
+- Beckett — the lull (watching, released): "nothing yet. / that is the idea."
+- Poe — the watch (noticing → awake): "the eye has found you / and will not blink."
+- Bulgakov — the guest (throughline, curdles): "manuscripts, they say, don't burn. / neither, it turns out, do i."
 
-| DO | DON'T |
-|---|---|
-| Horror by permission — every sensor consent-gated, revocable, panic switch always reachable | Jump-scares |
-| Negative space | Gore |
-| Near-silence | Bright colors |
-| Exactly one red accent | Clutter |
-| Slow | A second accent hue |
+### Structure & motion
+- Phases (`EyeSession.Phase`): dormant → seekingConsent → watching (40s) → noticing (30s) → awake; endings: denied / released (panic switch, honored from any phase).
+- One narration line per 9s beat (`Atmosphere.beatSeconds`). Slow crossfades only, never cuts. Escalation = more stillness, not more motion (2+ beats at awake → paralysis pairing).
+- Status bar on every screen: phase left, `CLOSE THE EYE` right.
+- Consent UI: hairline strokes, no fills; default is deny; declining is always safe and says so.
 
-## Motion & feel
+### The one rule — horror by permission (PILLARS.md)
+✓ consent explicit, explained, revocable per sensor · ✓ panic switch instant from any phase · ✓ dread over gore · ✓ the game may lie to its fiction, never to the player about what the app does.
+✕ photos/contacts/location/health — forbidden forever (no `Sensor` case exists) · ✕ fake "data leaked" · ✕ PII anywhere · ✕ jump-scare cadence, blood, a raised voice.
 
-Slow, breathing, sub-perceptual — nothing sudden, no jump cuts. The
-scroll-driven aperture (the eye opening as the page descends,
-`--scroll-lid` in `docs/index.html`) is the model for any new motion: tied to
-a continuous input, never a timed pop. `prefers-reduced-motion` always holds
-a single calm state (the eye's fallback is a static 25%-open frame, no
-animation) — any new motion needs an equivalent still frame, not just a
-skipped animation.
+If a scare only works by breaking this, the scare is wrong — not the rule.
 
-## Reference screens
+---
 
-Real in-app screenshots, referenced (not duplicated) from `docs/screens/`:
+## Visual boards
+
+`chess-moodboard.html` and `lull-moodboard.html` are meant to sit alongside
+this file in `docs/design/moodboard/`. `lull-moodboard.html` is not yet
+checked in here — the owner has the file; drop it into this folder to
+complete the pair.
+
+## Reference screens (LULL)
+
+Real in-app screenshots, in `docs/screens/`:
 
 - [`01-consent-title.png`](../../screens/01-consent-title.png) — the
   threshold: honest rationale, refusable, before any OS prompt.
