@@ -45,6 +45,19 @@ Copy: plain, warm, unhurried. No exclamation marks.
 - Square states: selected yellow .45 · last move yellow .30 · hint blue .35 · legal target = black .22 dot (ring on captures) · check = red radial glow.
 - Notation: SAN from ChessKit (`Board.san`) — `e4 Nf3 exd5 O-O a8=Q Nge2 R1a4 Qxe5+` — always mono on screen. Spoken = built from the move, never raw SAN: "White: Knight to f3, check" / "Black: pawn takes on d5" / "castles kingside" / "pawn promotes to Queen on e1". Every part localized in the app layer.
 
+### Promotion picker (BoardView.swift)
+- Stock `confirmationDialog` titled "Promote to", tinted brass — never a custom picker. Triggered by legality: one from→to matching several legal moves means promotion, on tap and drag alike.
+- Options sorted queen → rook → bishop → knight (`promotionOrder`); names localized via `PieceKind.localizedName`.
+- Spoken: "Black: pawn promotes to Queen on e1" ("pawn takes and promotes to …" on captures). Written: SAN `a8=Q`.
+
+### Hints & takebacks (GameSession.swift)
+- Hint = "what would you play for me?" — fixed depth-4/1.0s search regardless of opponent strength; pondering stops first (hint rides the warm table); shown only if the position is unchanged; both squares tint blue and read "hint"; clears on the next move.
+- Take Back rewinds 2 plies (your move + engine's reply). Gated: game not over, engine idle, ≥2 moves, you to move. VoiceOver: "Move taken back." Engine games only — the server doesn't rewind.
+
+### Opening book (OpeningBook.standard)
+- 14 mainlines, first 4–6 moves each: 1.e4 — Ruy Lopez, Italian, Sicilian Open, Sveshnikov-ish, French Classical, Caro-Kann Classical, Scandinavian · 1.d4 — QGD, Slav, KID, Nimzo-Indian, London · 1.c4 — English Reversed Sicilian, English Symmetric.
+- Keyed by position (`repetitionKey`) — transpositions still hit the book. In book, the engine plays a uniformly random book move (variety). Illegal moves end their line at build time. Used by every strength except Beginner; EngineLab benches leave it off for determinism.
+
 ### Engine strengths & review (GameSession.swift · GameReview)
 - Difficulty presets: Beginner d1/1k nodes · Casual d2/0.5s · Club d4/1.0s · Expert d6/2.5s. Opening book: all but Beginner. Ponders on the player's time: Club + Expert. Random lapse: 30% / 10% / 0 / 0 — erratic like the humans they imitate.
 - The engine never answers instantly: every reply takes ≥400ms, because instant feels broken.
