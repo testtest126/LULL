@@ -56,6 +56,12 @@ Copy: plain, warm, unhurried. No exclamation marks.
 - Guests play as `Guest-NNNN`; Sign in with Apple recovers an account, never gates play.
 - Clocks server-authoritative: every `movePlayed` carries ClockState with both remaining times — the phone displays, never decides. Increment flashes green after a side's move; active side wears the quiet accent ring; tenths only under a minute.
 
+### Leaderboard & ratings (User.swift · GameCoordinator.swift)
+- Standard Elo, server-owned: everyone starts at 1200, K=32, expected = 1/(1+10^(Δ/400)). Deltas ride the `gameOver` message (`ratingDeltaWhite/Black`) — never computed client-side; shown as green +N / red −N.
+- Leaderboard (`GET /leaderboard`): top 50 by Elo, players with ≥1 finished game; reached from the trophy button on Home. Rank gold only for #1.
+- Matchmaking: mutual window — fresh entrant accepts ±100 Elo, widens per second waited, uncapped; a pair forms only when each window covers the gap.
+- Rematch offer window 60s; colors swap; new game uses post-Elo ratings. Profiles (rating + record) visible to signed-in players; game contents are not.
+
 ### Accessibility & VoiceOver (audit #83; tested, not aspirational)
 - Every square is a VoiceOver button: label = "e4, White Knight"; identifier `square_e4`; value mirrors every visual highlight — selected · possible move · last move · hint · in check — and states compose ("possible move, last move"). Whole matrix unit-tested.
 - Takebacks announce "Move taken back"; moves speak plain English, never raw SAN.
