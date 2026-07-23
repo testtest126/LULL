@@ -1,3 +1,5 @@
+// xcode: set sdk=iOS
+
 import SwiftUI
 import LULLKit
 
@@ -19,7 +21,10 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            Theme.ink.ignoresSafeArea()
+            // Experimental SpriteKit atmosphere layer (see AtmosphereScene.swift).
+            // Purely additive: replace with `Theme.ink.ignoresSafeArea()` to
+            // remove it, nothing downstream depends on it.
+            AtmosphereBackground()
             switch model.eye.phase {
             case .dormant, .seekingConsent:
                 ConsentView(model: model)
