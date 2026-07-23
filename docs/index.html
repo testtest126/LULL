@@ -113,20 +113,46 @@
   }
 
   /* ---------- the eye / aperture motif ----------
-     One reusable glyph. Its clip-path reveals more of the same iris/pupil
-     as --lid grows; nothing about visibility of real *content* ever depends
-     on this — it is purely decorative, so a failure in the script below
-     never breaks the page, it just leaves the eye at its calm CSS default
-     (--scroll-lid: 25%, declared on :root). */
+     One reusable glyph: a cold, almond eye (unchanged register — cyan
+     sclera, sepia iris, dark-red pupil) with a rose-window's radial rim
+     — thin desaturated spoke segments, cathedral-glass architecture —
+     engraved into the white between iris and lid. Clipped to the sclera
+     (#eyeScleraClip) so the spokes read as detail *inside* the eye, never
+     as a separate flower silhouette bursting past it.
+     The clip-path is now a dilating circle rather than a sliding band: it
+     grows from the center, so opening reads as a pupil/aperture actually
+     dilating — pupil first, then iris, then the rose rim, then the white
+     — rather than an eyelid parting top-to-bottom. Nothing about
+     visibility of real *content* ever depends on this — it is purely
+     decorative, so a failure in the script below never breaks the page,
+     it just leaves the eye at its calm CSS default (--scroll-lid: 25%,
+     declared on :root) — which, at this geometry, already shows a full
+     pupil, iris, and rim: the calm state reads as an eye, not a bud. */
   .eye {
     display: inline-block;
     width: 46px;
-    clip-path: inset(calc(50% - var(--lid)) 0);
+    aspect-ratio: 1;
   }
-  .eye svg { display: block; width: 100%; height: auto; }
+  .eye svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    clip-path: circle(var(--lid) at 50% 50%);
+  }
   .eye-white { fill: none; stroke: var(--cyan); stroke-width: 2.5; opacity: .5; }
+  /* The rim: a thin ring plus twelve short spokes, cold and desaturated
+     (cyan/steel, not the rose-window prototype's amber) — a cathedral
+     window's structure quoted, not its warmth. Kept faint on purpose: it
+     is a texture the iris sits inside, never competing with it. */
+  .eye-rose-ring   { fill: none; stroke: var(--faint); stroke-width: .7; opacity: .4; }
+  .eye-rose-spokes line { stroke: var(--cyan); stroke-width: .6; opacity: .28; }
+  /* A faint cold glow behind the iris — the one place this variant allows
+     itself an accent beyond stroke work. Literal hex, not var(--cyan),
+     because SVG gradient stops read the value at parse time; keep in sync
+     with --cyan (#7f9aa2) by hand if that ever changes. */
+  .eye-glow  { opacity: .55; }
   .eye-iris  { fill: none; stroke: var(--sepia); stroke-width: 2; opacity: .6; }
-  .eye-pupil { fill: var(--red); opacity: .55; }
+  .eye-pupil { fill: var(--red); opacity: .6; }
 
   /* A single continuous aperture, fixed to the viewport, present for the
      whole page. Its openness — --lid, here reading the shared, scroll-
@@ -522,7 +548,36 @@
 <body>
 
 <div class="scroll-eye" aria-hidden="true">
-  <span class="eye"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
+  <span class="eye"><svg viewBox="0 0 100 100">
+    <defs>
+      <clipPath id="eyeScleraClip"><ellipse cx="50" cy="50" rx="45" ry="23"/></clipPath>
+      <radialGradient id="eyeColdGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#9fb8bf" stop-opacity=".4"/>
+        <stop offset="100%" stop-color="#7f9aa2" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse class="eye-white" cx="50" cy="50" rx="45" ry="23"/>
+    <g clip-path="url(#eyeScleraClip)">
+      <circle class="eye-rose-ring" cx="50" cy="50" r="21"/>
+      <g class="eye-rose-spokes">
+        <line x1="50" y1="29" x2="50" y2="35"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(30 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(60 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(90 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(120 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(150 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(180 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(210 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(240 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(270 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(300 50 50)"/>
+        <line x1="50" y1="29" x2="50" y2="35" transform="rotate(330 50 50)"/>
+      </g>
+    </g>
+    <circle class="eye-glow" cx="50" cy="50" r="17" fill="url(#eyeColdGlow)"/>
+    <circle class="eye-iris" cx="50" cy="50" r="14"/>
+    <circle class="eye-pupil" cx="50" cy="50" r="6"/>
+  </svg></span>
 </div>
 <div class="grain-field" aria-hidden="true"></div>
 
