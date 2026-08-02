@@ -122,20 +122,43 @@
   }
 
   /* ---------- the eye / aperture motif ----------
-     One reusable glyph. Its clip-path reveals more of the same iris/pupil
-     as --lid grows; nothing about visibility of real *content* ever depends
-     on this — it is purely decorative, so a failure in the script below
-     never breaks the page, it just leaves the eye at its calm CSS default
-     (--scroll-lid: 25%, declared on :root). */
+     Restraint pass (owner feedback: the shipped rose-window hybrid read as
+     "too cheesy / too prominent" — LULL's pillar is restraint over
+     spectacle). One reusable glyph: a cold, almond eye (unchanged register
+     — cyan sclera, sepia iris, dark-red pupil). The rose-window rim from
+     the previous pass is pulled back hard: the twelve spokes are gone, and
+     the ring itself is now a hairline, near-invisible hint rather than a
+     visible ornament — a texture you'd have to look for, not a set piece.
+     The clip-path is a dilating circle rather than a sliding band: it
+     grows from the center, so opening reads as a pupil/aperture actually
+     dilating — pupil first, then iris, then the white — rather than an
+     eyelid parting top-to-bottom. Nothing about visibility of real
+     *content* ever depends on this — it is purely decorative, so a
+     failure in the script below never breaks the page, it just leaves the
+     eye at its calm CSS default (--scroll-lid: 25%, declared on :root). */
   .eye {
     display: inline-block;
     width: 46px;
-    clip-path: inset(calc(50% - var(--lid)) 0);
+    aspect-ratio: 1;
   }
-  .eye svg { display: block; width: 100%; height: auto; }
+  .eye svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    clip-path: circle(var(--lid) at 50% 50%);
+  }
   .eye-white { fill: none; stroke: var(--cyan); stroke-width: 2.5; opacity: .5; }
+  /* What's left of the rose-window rim after the restraint pass: no
+     spokes, and the ring itself down to a hairline the eye barely admits
+     to having. */
+  .eye-rose-ring   { fill: none; stroke: var(--faint); stroke-width: .4; opacity: .1; }
+  /* A faint cold glow behind the iris, cut back with everything else so it
+     reads as a trace of light, not a bloom. Literal hex, not var(--cyan),
+     because SVG gradient stops read the value at parse time; keep in sync
+     with --cyan (#7f9aa2) by hand if that ever changes. */
+  .eye-glow  { opacity: .3; }
   .eye-iris  { fill: none; stroke: var(--sepia); stroke-width: 2; opacity: .6; }
-  .eye-pupil { fill: var(--red); opacity: .55; }
+  .eye-pupil { fill: var(--red); opacity: .6; }
 
   /* A single continuous aperture, fixed to the viewport, present for the
      whole page. Its openness — --lid, here reading the shared, scroll-
@@ -144,19 +167,17 @@
      separate icons. Sits behind normal page content (z-index: -1); every
      section's own background/text still paints over it normally, so it
      reads most clearly wherever a section has no opaque background of its
-     own — which is exactly the phase-descent section this is built for. */
-  /* PROTOTYPE COMPARISON — the eye is offset to the left half of the
-     viewport (32%) instead of dead-center (50%) so the new .rose-eye
-     variant below can sit at 68% without overlapping it. This offset is
-     the only change made to .scroll-eye itself for this comparison; its
-     mechanic, palette, and behavior are otherwise completely untouched. */
+     own — which is exactly the phase-descent section this is built for.
+     Restraint pass: sized and dimmed down hard from the shipped hybrid —
+     it should read as a faint, cold, watching presence you almost don't
+     notice until it opens, not a centerpiece. */
   .scroll-eye {
     position: fixed;
     top: 50%; left: 32%;
     transform: translate(-50%, -50%);
     z-index: -1;
-    width: min(40vw, 22rem);
-    opacity: .14;
+    width: min(26vw, 14rem);
+    opacity: .08;
     pointer-events: none;
   }
   .scroll-eye .eye { --lid: var(--scroll-lid); width: 100%; }
@@ -609,7 +630,22 @@
      that value, not a second mechanism. Delete this comment and whichever
      variant loses before merging anywhere real. -->
 <div class="scroll-eye" aria-hidden="true">
-  <span class="eye"><svg viewBox="0 0 100 60"><ellipse class="eye-white" cx="50" cy="30" rx="44" ry="18"/><circle class="eye-iris" cx="50" cy="30" r="13"/><circle class="eye-pupil" cx="50" cy="30" r="5"/></svg></span>
+  <span class="eye"><svg viewBox="0 0 100 100">
+    <defs>
+      <clipPath id="eyeScleraClip"><ellipse cx="50" cy="50" rx="45" ry="23"/></clipPath>
+      <radialGradient id="eyeColdGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#9fb8bf" stop-opacity=".4"/>
+        <stop offset="100%" stop-color="#7f9aa2" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse class="eye-white" cx="50" cy="50" rx="45" ry="23"/>
+    <g clip-path="url(#eyeScleraClip)">
+      <circle class="eye-rose-ring" cx="50" cy="50" r="21"/>
+    </g>
+    <circle class="eye-glow" cx="50" cy="50" r="17" fill="url(#eyeColdGlow)"/>
+    <circle class="eye-iris" cx="50" cy="50" r="14"/>
+    <circle class="eye-pupil" cx="50" cy="50" r="6"/>
+  </svg></span>
 </div>
 <div class="eye-compare-label eye-compare-label--cold" aria-hidden="true">current</div>
 

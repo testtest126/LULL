@@ -176,4 +176,123 @@ public enum Atmosphere {
     public static func beat(forElapsed elapsed: TimeInterval) -> Int {
         max(0, Int(elapsed / beatSeconds))
     }
+
+    // MARK: - THE MIRROR
+
+    /// The literal phrase behind the recurring motif — defined once, here, so
+    /// nothing outside `Atmosphere` ever hardcodes it. See
+    /// `docs/ideation/mirror-and-still-here.md` §2: shown in full only once,
+    /// at the ceiling, and only for a player who lingers there.
+    public static let stillHereMotif = "i am still here"
+
+    /// How many beats a player has to linger at `.contact` (see
+    /// `MirrorSession.contactElapsed`) before the full "I AM STILL HERE"
+    /// scrawl is legible at all. A player who reaches `.contact` and closes
+    /// the mirror quickly never sees the phrase spelled out in full — the
+    /// design doc's "full scrawl once at the ceiling, if at all" is
+    /// implemented as *conditional on dwelling*, the same mechanism already
+    /// used for `awakeParalysisThresholdBeats`.
+    public static let mirrorScrawlThresholdBeats = 2
+
+    /// The ordered lines for a `MirrorSession.Phase` — same shape as
+    /// `script(for: EyeSession.Phase:)`. `contactDwellBeats` only matters for
+    /// `.contact`; every other phase ignores it. Deliberately reuses only
+    /// Kafka, Beckett, and Poe: the design doc considered and rejected a
+    /// fourth register for the motif ("this doesn't need a fourth
+    /// author-register — that would dilute Kafka/Beckett/Poe's discipline"),
+    /// and Bulgakov is specific to THE EYE's arc, not named anywhere in the
+    /// mirror doc — so he does not appear here.
+    public static func mirrorScript(for phase: MirrorSession.Phase, contactDwellBeats: Int = 0) -> [Line] {
+        switch phase {
+        case .dormant:
+            return []
+
+        // KAFKA — the threshold, mirror-themed. Same register and mercy as
+        // EyeSession's threshold; a different surface asking the same honest
+        // question.
+        case .seekingConsent:
+            return [
+                Line("a glass is asking to hold your face a while.", .kafka),
+                Line("you have said nothing yet.\nit is already listening for an answer.", .kafka),
+            ]
+        case .denied:
+            return [
+                Line("you said no.\nthe glass stays dark. sleep well.", .kafka),
+            ]
+
+        // BECKETT — clear, lag, and drift. The design doc calls all three
+        // "still deniable": the reflection is wrong, but never so wrong yet
+        // that it stops being explainable. That's Beckett's register, not
+        // Poe's — the watch hasn't stirred yet.
+        case .clear:
+            return [
+                Line("look. it looks back exactly.\nthat is the whole of it, for now.", .beckett),
+                Line("nothing wrong with a mirror that behaves.\nnothing wrong yet.", .beckett),
+                Line("hold still. it's only checking\nthat it still knows your face.", .beckett),
+            ]
+        case .lag:
+            return [
+                Line("a half-beat behind, that's all.\nglass is heavier than air, sometimes.", .beckett),
+                Line("you moved. it is still finishing moving.\nthat's all this is.", .beckett),
+            ]
+        case .drift:
+            return [
+                Line("it held a pose you already broke.\ncould be the light. could be tired eyes.", .beckett),
+                Line("the glass is a half-step slow to agree with you.\nstill agreeing, though.", .beckett),
+            ]
+
+        // POE — independence. The first true rule break: something the
+        // player didn't do. The motif gets its first appearance here, fogged
+        // and only partly legible, per the doc's restraint principle
+        // ("mostly heard or implied, not shown in full... every time").
+        case .independence:
+            return [
+                Line("it moved first, this time.", .poe),
+                Line("the glass holds three words, mostly.\nyou can make out \"still.\"", .poe),
+                Line("you didn't blink. it did.", .poe),
+            ]
+
+        // POE — contact. The ceiling. A player who arrives and leaves
+        // quickly meets only the short pairing below; the full scrawl is
+        // gated on `contactDwellBeats` — see `mirrorScrawlThresholdBeats`.
+        case .contact:
+            let core = [
+                Line("it isn't copying you anymore.", .poe),
+                Line("the glass is saying something now,\non a clock that isn't yours.", .poe),
+            ]
+            if contactDwellBeats >= mirrorScrawlThresholdBeats {
+                return core + [
+                    Line("the fog finally holds still long enough to read it:\n\(stillHereMotif).", .poe),
+                ]
+            }
+            return core
+
+        // BECKETT — the closing. Same mercy as THE EYE's release: nothing
+        // watches now; nothing was.
+        case .released:
+            return [
+                Line("the glass is covered now.\nnothing looks back. it was only a game.", .beckett),
+            ]
+        }
+    }
+
+    /// The line to show for a `MirrorSession.Phase` at a given `beat`. Same
+    /// contract as `narration(for: EyeSession.Phase:)`, with one deliberate
+    /// difference: `.contact`'s very first beat (`beat == 0`) always returns
+    /// `nil` — "one true silence before the ceiling," per the design doc —
+    /// and only beat `1` onward cycles through `.contact`'s actual lines.
+    /// Because `contactElapsed` only counts upward for as long as the player
+    /// stays (never resets), beat `0` is reached, and left, exactly once per
+    /// session: this is a single silence, not a recurring one.
+    public static func mirrorNarration(for phase: MirrorSession.Phase, beat: Int = 0, contactDwellBeats: Int = 0) -> Line? {
+        let lines = mirrorScript(for: phase, contactDwellBeats: contactDwellBeats)
+        guard !lines.isEmpty else { return nil }
+        if phase == .contact {
+            if beat == 0 { return nil }
+            let i = (((beat - 1) % lines.count) + lines.count) % lines.count
+            return lines[i]
+        }
+        let i = ((beat % lines.count) + lines.count) % lines.count
+        return lines[i]
+    }
 }
